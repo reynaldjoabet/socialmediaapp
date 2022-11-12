@@ -7,25 +7,28 @@ import doobie.implicits._
 
 final case class PostService[F[_]: Async](private val xa: Transactor[F]) {
 
-  def findUserByUsername(username: String): F[Option[User]] =
-    sql"SELECT * FROM users WHERE username= $username"
-      .query[User]
-      .option
+  def getPosts: F[List[Post]] =
+    sql"SELECT p.*, u.id AS userId, name, profilePic FROM posts AS p JOIN users AS u ON (u.id = p.userId) LEFT JOIN relationships AS r ON (p.userId = r.followedUserId) WHERE r.followerUserId= ? OR p.userId =? ORDER BY p.createdAt DESC"
+      .query[Post]
+      .to[List]
       .transact(xa)
 
-  def saveUser(
-    username: String,
-    email: String,
-    password: String,
-    name: String,
-    coverPicture: Option[String],
-    profilePicture: Option[String],
-    city: Option[String],
-    website: Option[String],
-  ): F[Int] =
-    sql"INSERT INTO users (username,email,password,name,cover_picture,profile_picture,city,website) VALUES($username,$email,$password,$name,$coverPicture,$profilePicture,$city,$website)"
+  def savePost(
+    description: String,
+    image: String,
+    userId: Int,
+  ): F[Post] =
+    sql"INSERT INTO posts  (descritpion,image,user_id) VALUES($description,$image,$userId)"
       .update
-      .withUniqueGeneratedKeys[Int]("id")
+      .withUniqueGeneratedKeys[Post]("id", "description", "image", "user_id")
       .transact(xa)
+
+  def deletePost(
+    postId: Int,
+    userId: Int,
+  ): F[Int] = sql"delete from posts where id = $postId AND user_id=$userId"
+    .update
+    .run
+    .transact(xa)
 
 }

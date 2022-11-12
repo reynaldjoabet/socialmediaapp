@@ -19,7 +19,7 @@ object Server {
       serverConfig = appConfig.serverConfig
       auth0Config = appConfig.auth0Config
 
-      //_ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
+      // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
       fiber <- EmberServerBuilder
         .default[IO]

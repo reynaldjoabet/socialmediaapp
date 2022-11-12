@@ -4,28 +4,33 @@ import domain._
 import cats.effect.kernel.Async
 import doobie.util.transactor.Transactor
 import doobie.implicits._
+import java.time.LocalDateTime
 
 final case class CommentService[F[_]: Async](private val xa: Transactor[F]) {
 
-  def findUserByUsername(username: String): F[Option[User]] =
-    sql"SELECT * FROM users WHERE username= $username"
-      .query[User]
-      .option
+  def getComments(postId: Int): F[List[Comment]] =
+    sql"SELECT * FROM comments  JOIN users ON comments.user_id=users.id WHERE comments.post_id=$postId ORDER BY comments.created_at DESC"
+      .query[Comment]
+      .to[List]
       .transact(xa)
 
-  def saveUser(
-    username: String,
-    email: String,
-    password: String,
-    name: String,
-    coverPicture: Option[String],
-    profilePicture: Option[String],
-    city: Option[String],
-    website: Option[String],
-  ): F[Int] =
-    sql"INSERT INTO users (username,email,password,name,cover_picture,profile_picture,city,website) VALUES($username,$email,$password,$name,$coverPicture,$profilePicture,$city,$website)"
+  def saveComment(
+    description: String,
+    createdAt: LocalDateTime,
+    userId: Int,
+    postId: Int,
+  ): F[Comment] =
+    sql"INSERT INTO comments  (description,created_at,user_id,post_id) VALUES($description,$createdAt,$userId,$postId)"
       .update
-      .withUniqueGeneratedKeys[Int]("id")
+      .withUniqueGeneratedKeys[Comment]("id", "description", "created_at", "user_id", "post_id")
       .transact(xa)
+
+  def deleteComment(
+    commentId: Int,
+    userId: Int,
+  ): F[Int] = sql"delete from comments where id = $commentId AND user_id=$userId"
+    .update
+    .run
+    .transact(xa)
 
 }

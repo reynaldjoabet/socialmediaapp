@@ -7,25 +7,23 @@ import doobie.implicits._
 
 final case class LikesService[F[_]: Async](private val xa: Transactor[F]) {
 
-  def findUserByUsername(username: String): F[Option[User]] =
-    sql"SELECT * FROM users WHERE username= $username"
-      .query[User]
-      .option
+  def getLikes(postId: Int): F[List[Likes]] = sql"SELECT * FROM likes WHERE post_id= $postId "
+    .query[Likes]
+    .to[List]
+    .transact(xa)
+
+  def saveLikes(userId: Int, postId: Int): F[Likes] =
+    sql"INSERT INTO likes  (user_id,post_id) VALUES($userId,$postId)"
+      .update
+      .withUniqueGeneratedKeys[Likes]("id", "user_id", "post_id")
       .transact(xa)
 
-  def saveUser(
-    username: String,
-    email: String,
-    password: String,
-    name: String,
-    coverPicture: Option[String],
-    profilePicture: Option[String],
-    city: Option[String],
-    website: Option[String],
-  ): F[Int] =
-    sql"INSERT INTO users (username,email,password,name,cover_picture,profile_picture,city,website) VALUES($username,$email,$password,$name,$coverPicture,$profilePicture,$city,$website)"
-      .update
-      .withUniqueGeneratedKeys[Int]("id")
-      .transact(xa)
+  def deleteLikes(
+    userId: Int,
+    postId: Int,
+  ): F[Int] = sql"delete from likes where user_id = $userId AND post_id=$postId"
+    .update
+    .run
+    .transact(xa)
 
 }

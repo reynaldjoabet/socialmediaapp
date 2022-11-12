@@ -4,7 +4,7 @@ import io.circe.generic.semiauto.deriveCodec
 import org.http4s.circe.jsonOf
 import cats.effect.IO
 
-final case class RegisterUser(
+final case class CreateUser(
   username: String,
   email: String,
   password: String,
@@ -15,8 +15,8 @@ final case class RegisterUser(
   website: Option[String],
 )
 
-object RegisterUser {
+object CreateUser {
 
-  implicit val registerCodec = deriveCodec[RegisterUser]
+  implicit val registerCodec = deriveCodec[CreateUser]
 
 }
