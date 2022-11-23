@@ -1,24 +1,31 @@
-import cats.effect.kernel.Async
+import cats.effect.Clock
 
-import services.UserService
-import cats.data.Kleisli
-import authorization._
-import cats.effect._
+import cats.effect.MonadCancel
+import cats.effect.kernel.Async
+import cats.effect.kernel.Resource
+import com.codahale.metrics.MetricFilter
+import com.codahale.metrics.graphite.Graphite
+import com.codahale.metrics.graphite.GraphiteReporter
+
+import java.net.InetSocketAddress
+import java.util.concurrent.TimeUnit
 import cats.implicits._
 import org.http4s._
-import org.http4s.server.Server
+import org.http4s.metrics.prometheus.Prometheus
+import org.http4s.metrics.prometheus.PrometheusExportService
 import org.http4s.server.middleware._
+
 import scala.concurrent.duration._
-import cats.effect.kernel.Async
+import com.codahale.metrics.MetricRegistry
 import routes._
-
-import org.http4s.server.HttpMiddleware
-
-import db.DBMigration
-
+import com.codahale.metrics.SharedMetricRegistries
+import doobie.util.transactor._
+import io.prometheus.client.CollectorRegistry
 import org.http4s.Method._
+import org.http4s.metrics.dropwizard.Dropwizard
+import org.http4s.metrics.dropwizard.metricsService
 
-case class HttpApi[F[_]: Async]() {
+class HttpApi[F[_]](implicit F: Async[F]) {
 
   // private  val middleware= AuthorizationMiddleware
 
@@ -32,8 +39,6 @@ case class HttpApi[F[_]: Async]() {
   private val middleware: HttpRoutes[F] => HttpRoutes[F] = { http: HttpRoutes[F] =>
     AutoSlash(http)
   } andThen { http: HttpRoutes[F] =>
-    CORS(http, corsConfig)
-  } andThen { http: HttpRoutes[F] =>
     Timeout(60.seconds)(http)
   }
 
@@ -43,15 +48,71 @@ case class HttpApi[F[_]: Async]() {
     ResponseLogger.httpApp(true, true)(http)
   }
 
-  private val httpRoutes =
-    HealthRoutes[F]().router <+> UserRoutes.make[F].router <+> LogoutRoutes().logoutRoutes <+>
+  private val httpRoutes: HttpRoutes[F] =
+    HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
       CommentRoutes.make[F].commentRoutes <+> PostRoutes.make[F].postRoutes <+> LikesRoutes
         .make[F]
         .likesRoutes
 
+  private def httpRoutes(transactor: Transactor[F]): HttpRoutes[F] =
+    HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
+      CommentRoutes.make[F](transactor).commentRoutes <+> PostRoutes
+        .make[F](transactor)
+        .postRoutes <+> LikesRoutes
+        .make[F](transactor)
+        .likesRoutes
+
+  def middlewareHttpApp(transactor: Transactor[F]) = middleware(httpRoutes(transactor)).orNotFound
+
   val middlewareHttpApp = middleware(httpRoutes).orNotFound
+
+  val meteredApp =
+    for {
+      registry <- F.delay(new MetricRegistry)
+      meteredRoutes = Metrics[F](Dropwizard(registry, "server"))(middleware(httpRoutes))
+      _ <- graphiteReporter(registry)
+    } yield (meteredRoutes <+> metricsService(registry)).orNotFound
+
+  def meteredApp(transactor: Transactor[F]) =
+    for {
+      registry <- F.delay(SharedMetricRegistries.getOrCreate("default"))
+      meteredRoutes = Metrics[F](Dropwizard(registry, "server"))(middleware(httpRoutes(transactor)))
+      _ <- graphiteReporter(registry)
+    } yield (meteredRoutes <+> metricsService(registry)).orNotFound
+
+  def prometheusMeteredRoutes(
+    transactor: Transactor[F]
+  ) = prometheusReporter(middleware(httpRoutes(transactor)))
+
+  val prometheusMeteredRoutes = prometheusReporter(middleware(httpRoutes))
+
+  private def prometheusReporter(
+    httpRoutes: HttpRoutes[F]
+  ) =
+    for {
+      prometheusExportService <- PrometheusExportService.build[F]
+      prometheusMetricsOps <- Prometheus.metricsOps(
+        prometheusExportService.collectorRegistry,
+        "server",
+      )
+    } yield Metrics(prometheusMetricsOps)(httpRoutes) <+> prometheusExportService.routes
+
+  private def graphiteReporter(metricRegistry: MetricRegistry): F[Unit] =
+    for {
+      graphite <- F.delay(new Graphite(new InetSocketAddress("localhost", 2003)))
+      reporter <- F.delay(
+        GraphiteReporter
+          .forRegistry(metricRegistry)
+          .prefixedWith("web1.example.com")
+          .convertRatesTo(TimeUnit.SECONDS)
+          .convertDurationsTo(TimeUnit.MILLISECONDS)
+          .filter(MetricFilter.ALL)
+          .build(graphite)
+      )
+    } yield reporter.start(2, TimeUnit.SECONDS)
+
 }
 
 object HttpApi {
-  def make[F[_]: Async]() = HttpApi()
+  def make[F[_]: Async]() = new HttpApi
 }

@@ -5,6 +5,9 @@ import cats.effect.kernel.Async
 import doobie.util.transactor.Transactor
 import doobie.implicits._
 import java.time.LocalDateTime
+//import doobie.implicits.javasql._
+//import doobie.implicits.javatimedrivernative
+import doobie.postgres.implicits._
 
 final case class CommentService[F[_]: Async](private val xa: Transactor[F]) {
 

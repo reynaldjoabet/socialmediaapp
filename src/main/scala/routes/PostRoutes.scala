@@ -8,6 +8,7 @@ import services._
 import api._
 import authorization.AuthorizationMiddleware
 import db.Doobie._
+import doobie.util.transactor._
 
 final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Http4sDsl[F] {
 
@@ -34,6 +35,6 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
 }
 
 object PostRoutes {
-
+  def make[F[_]: Async](transactor: Transactor[F]) = PostRoutes[F](PostService(transactor))
   def make[F[_]: Async]() = PostRoutes[F](PostService(xa))
 }

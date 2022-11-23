@@ -8,8 +8,14 @@ import org.http4s._
 import authorization.AuthorizationMiddleware
 import services._
 import db.Doobie._
+import doobie.util.transactor._
 
 final case class CommentRoutes[F[_]: Async](commetService: CommentService[F]) extends Http4sDsl[F] {
+
+  case class Foo(i: Int)
+  implicit val fooDecoder = QueryParamDecoder.intQueryParamDecoder.map(Foo(_))
+
+  object FooMatcher extends QueryParamDecoderMatcher[Foo]("foo")
 
   import org.http4s.server.Router
 
@@ -34,6 +40,7 @@ final case class CommentRoutes[F[_]: Async](commetService: CommentService[F]) ex
 }
 
 object CommentRoutes {
+  def make[F[_]: Async](transactor: Transactor[F]) = CommentRoutes[F](CommentService(transactor))
+  def make[F[_]: Async] = CommentRoutes[F](CommentService(xa))
 
-  def make[F[_]: Async]() = CommentRoutes[F](CommentService(xa))
 }

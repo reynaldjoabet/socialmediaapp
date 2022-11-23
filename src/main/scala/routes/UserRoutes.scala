@@ -16,6 +16,7 @@ import domain.User
 import db.Doobie._
 import org.http4s.ResponseCookie
 import java.util.UUID
+import doobie.util.transactor._
 
 final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Http4sDsl[F] {
 
@@ -55,24 +56,24 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
 
     case req @ POST -> Root / "register" =>
       req
-        .as[RegisterUser]
-        .flatMap { registerUser =>
+        .as[CreateUser]
+        .flatMap { createUser =>
           userService
-            .findUserByUsername(registerUser.username)
+            .findUserByUsername(createUser.username)
             .flatMap {
               case Some(user) => Conflict(UserExists("User already exists"))
 
               case None =>
                 userService
                   .saveUser(
-                    registerUser.username,
-                    registerUser.email,
-                    HashingService.hashPassword(registerUser.password),
-                    registerUser.name,
-                    registerUser.coverPicture,
-                    registerUser.profilePicture,
-                    registerUser.city,
-                    registerUser.website,
+                    createUser.username,
+                    createUser.email,
+                    HashingService.hashPassword(createUser.password),
+                    createUser.name,
+                    createUser.coverPicture,
+                    createUser.profilePicture,
+                    createUser.city,
+                    createUser.website,
                   )
                   .flatMap(_ => Created())
 
@@ -88,4 +89,6 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
 object UserRoutes {
 
   def make[F[_]: Async]() = UserRoutes[F](UserService(xa))
+
+  def make[F[_]: Async](transactor: Transactor[F]) = UserRoutes[F](UserService(transactor))
 }

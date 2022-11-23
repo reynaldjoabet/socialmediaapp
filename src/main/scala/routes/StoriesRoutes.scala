@@ -8,6 +8,8 @@ import org.http4s._
 import authorization.AuthorizationMiddleware
 import services._
 import db.Doobie._
+import doobie.util.transactor._
+import org.http4s.server.middleware.Metrics
 
 final case class StoriesRoutes[F[_]: Async](storiesService: StoriesService[F])
   extends Http4sDsl[F] {
@@ -35,4 +37,6 @@ final case class StoriesRoutes[F[_]: Async](storiesService: StoriesService[F])
 
 object StoriesRoutes {
   def make[F[_]: Async]() = StoriesRoutes[F](StoriesService(xa))
+
+  def make[F[_]: Async](transactor: Transactor[F]) = StoriesRoutes[F](StoriesService(transactor))
 }

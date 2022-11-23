@@ -8,7 +8,7 @@ import cats.implicits._
 import org.http4s.implicits._
 import authorization._
 import api._
-
+import doobie.util.transactor._
 import org.http4s.server.AuthMiddleware
 
 final case class LogoutRoutes[F[_]: Async]() extends Http4sDsl[F] {

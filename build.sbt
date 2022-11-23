@@ -5,9 +5,9 @@ ThisBuild / scalaVersion := "2.13.10"
 val http4sVersion = "0.23.16"
 val cirisVersion = "2.4.0"
 val circeVersion = "0.14.3"
-val flywayVersion = "8.5.12"
-val bcryptVersion = "0.4.1"
-val postgresVersion = "42.3.6"
+val flywayVersion = "9.8.1"
+val bcryptVersion = "0.4.3"
+val postgresVersion = "42.5.0"
 val doobieVersion = "1.0.0-RC1"
 val quillVersion = "4.6.0"
 val catsEffectVersion = "3.3.12"
@@ -24,11 +24,12 @@ val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
 val fs2 = "co.fs2" %% "fs2-core" % fs2Version
 ///val quill="io.getquill" %% "quill-doobie" % quillVersion
 
+val doobie_hikari = "org.tpolecat" %% "doobie-hikari" % doobieVersion
 val http4sDsl = http4s("dsl")
 val http4sServer = http4s("ember-server")
 val http4sClient = http4s("ember-client")
 val http4sCirce = http4s("circe")
-val jwt = "com.github.jwt-scala" %% "jwt-circe" % "9.1.1"
+val jwt = "com.github.jwt-scala" %% "jwt-circe" % "9.1.2"
 val jwks = "com.auth0" % "jwks-rsa" % "0.21.2"
 val logbackVersion = "1.4.4"
 val postgres = "org.postgresql" % "postgresql" % postgresVersion
@@ -41,6 +42,10 @@ val doobie_postgres =
   "org.tpolecat" %% "doobie-postgres" % doobieVersion // Postgres driver 42.3.1 + type mappings.
 val logback = "ch.qos.logback" % "logback-classic" % logbackVersion
 val bcrypt = "de.svenkubiak" % "jBCrypt" % bcryptVersion
+val prometheus = "org.http4s" %% "http4s-prometheus-metrics" % "0.24.1"
+val dropwizard = "org.http4s" %% "http4s-dropwizard-metrics" % "0.23.11"
+val graphite = "io.dropwizard.metrics" % "metrics-graphite" % "4.2.13"
+libraryDependencies += "io.dropwizard.metrics" % "metrics-graphite" % "4.2.13"
 
 lazy val root = (project in file("."))
   .settings(
@@ -64,5 +69,9 @@ lazy val root = (project in file("."))
       bcrypt,
       catsEffect,
       fs2,
+      doobie_hikari,
+      dropwizard,
+      graphite,
+      prometheus,
     ),
   )

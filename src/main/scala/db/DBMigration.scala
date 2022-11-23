@@ -1,7 +1,5 @@
 package db
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.MonadCancel
 import config.FlywayConfiguration
 import org.flywaydb.core.Flyway
 import cats.effect.IO
@@ -29,6 +27,7 @@ object DBMigration {
         Flyway
           .configure()
           .dataSource(flywayConfig.url, flywayConfig.username, flywayConfig.password)
+          .cleanDisabled(false)
           .load()
       )
       _ <- IO.delay(flyway.clean())

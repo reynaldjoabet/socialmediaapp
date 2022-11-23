@@ -8,6 +8,7 @@ import org.http4s.server.AuthMiddleware
 import services._
 import authorization.AuthorizationMiddleware
 import db.Doobie._
+import doobie.util.transactor._
 
 final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends Http4sDsl[F] {
 
@@ -34,6 +35,6 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
 }
 
 object LikesRoutes {
-
+  def make[F[_]: Async](transactor: Transactor[F]) = LikesRoutes[F](LikesService(transactor))
   def make[F[_]: Async]() = LikesRoutes[F](LikesService(xa))
 }
