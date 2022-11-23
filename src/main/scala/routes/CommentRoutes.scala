@@ -9,24 +9,74 @@ import authorization.AuthorizationMiddleware
 import services._
 import db.Doobie._
 import doobie.util.transactor._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.circe.CirceEntityDecoder._
+import cats.implicits._
 
-final case class CommentRoutes[F[_]: Async](commetService: CommentService[F]) extends Http4sDsl[F] {
+final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
+  extends Http4sDsl[F] {
 
-  case class Foo(i: Int)
-  implicit val fooDecoder = QueryParamDecoder.intQueryParamDecoder.map(Foo(_))
-
-  object FooMatcher extends QueryParamDecoderMatcher[Foo]("foo")
+  private object UserId extends QueryParamDecoderMatcher[Int]("userId")
+  private object CommentId extends QueryParamDecoderMatcher[Int]("commentId")
 
   import org.http4s.server.Router
 
   private val prefix = "api/comments"
 
-  private val routes = HttpRoutes.of[F] { case GET -> Root / "hello" =>
-    Ok("Hello dude") // .map(_.addCookie())
+  private val routes = HttpRoutes.of[F] {
+    case GET -> Root / IntVar(postId) =>
+      commentService
+        .getComments(postId)
+        .flatMap(Ok(_))
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    case req @ POST -> Root / "add" =>
+      req
+        .as[CreateComment]
+        .flatMap { comment =>
+          commentService
+            .saveComment(comment.description, comment.createdAt, comment.userId, comment.postId)
+            .flatMap(Ok(_))
+        }
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    case DELETE -> Root / IntVar(userId) / IntVar(commentId) =>
+      commentService
+        .deleteComment(commentId, userId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    // .map(_.addCookie())
   }
 
   private val authRoutes = AuthedRoutes.of[LoginUser, F] {
-    case GET -> Root / "hello" as loginUser => Ok("Hello dude") // .map(_.addCookie())
+    case GET -> Root / IntVar(postId) as loginUser =>
+      commentService
+        .getComments(postId)
+        .flatMap(Ok(_))
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case req @ POST -> Root / "add" as loginUser =>
+      req
+        .req
+        .as[CreateComment]
+        .flatMap { comment =>
+          commentService
+            .saveComment(comment.description, comment.createdAt, comment.userId, comment.postId)
+            .flatMap(Ok(_))
+        }
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case DELETE -> Root / IntVar(userId) / IntVar(commentId) as loginUser =>
+      commentService
+        .deleteComment(commentId, userId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case DELETE -> Root / "delete" :? UserId(userId) +& CommentId(commentId) as loginUser =>
+      commentService
+        .deleteComment(commentId, userId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    // .map(_.addCookie())
   }
 
   val commentRoutes = Router(

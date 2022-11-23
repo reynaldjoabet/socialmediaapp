@@ -9,19 +9,74 @@ import services._
 import authorization.AuthorizationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.circe.CirceEntityDecoder._
+import cats.implicits._
 
 final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends Http4sDsl[F] {
 
   import org.http4s.server.Router
-
+  private object UserId extends QueryParamDecoderMatcher[Int]("userId")
+  private object PostId extends QueryParamDecoderMatcher[Int]("postId")
   private val prefix = "api/likes"
 
-  private val routes = HttpRoutes.of[F] { case GET -> Root / "hello" =>
-    Ok("Hello dude") // .map(_.addCookie())
+  private val routes = HttpRoutes.of[F] {
+    case GET -> Root / IntVar(postId) =>
+      likesService
+        .getLikes(postId)
+        .flatMap(Ok(_))
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    case req @ POST -> Root / "add" =>
+      req
+        .as[CreateLike]
+        .flatMap { like =>
+          likesService
+            .saveLikes(like.userId, like.postId)
+            .flatMap(Ok(_))
+        }
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    case DELETE -> Root / IntVar(userId) / IntVar(postId) =>
+      likesService
+        .deleteLikes(userId, postId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+    // .map(_.addCookie())
   }
 
   private val authRoutes = AuthedRoutes.of[LoginUser, F] {
-    case GET -> Root / "hello" as loginUser => Ok("Hello dude") // .map(_.addCookie())
+    case GET -> Root / IntVar(postId) as loginUser =>
+      likesService
+        .getLikes(postId)
+        .flatMap(Ok(_))
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case req @ POST -> Root / "add" as loginUser =>
+      req
+        .req
+        .as[CreateLike]
+        .flatMap { like =>
+          likesService
+            .saveLikes(
+              like.userId,
+              like.postId,
+            )
+            .flatMap(Ok(_))
+        }
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case DELETE -> Root / IntVar(userId) / IntVar(postId) as loginUser =>
+      likesService
+        .deleteLikes(userId, postId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    case DELETE -> Root / "delete" :? UserId(userId) +& PostId(postId) as loginUser =>
+      likesService
+        .deleteLikes(userId, postId)
+        .flatMap(_ => Ok())
+        .handleErrorWith(e => InternalServerError(e.toString()))
+
+    // .map(_.addCookie())
   }
 
   val likesRoutes = Router(
