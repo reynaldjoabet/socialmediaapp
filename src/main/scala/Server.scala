@@ -37,7 +37,7 @@ object Server {
       app <- meteredApp
       // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
-      fiber <- EmberServerBuilder
+      _ <- EmberServerBuilder
         .default[IO]
         .withHttpApp(app)
         .withPort(Port.fromInt(serverConfig.port).get)
@@ -62,7 +62,7 @@ object Server {
 
       // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
-      fiber <- EmberServerBuilder
+      _ <- EmberServerBuilder
         .default[IO]
         .withHttpApp(httpRoutes.orNotFound)
         .withPort(Port.fromInt(serverConfig.port).get)
@@ -88,7 +88,7 @@ object Server {
 
       // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
-      fiber <- EmberServerBuilder
+      _ <- EmberServerBuilder
         .default[IO]
         .withHttpApp(app)
         .withPort(Port.fromInt(serverConfig.port).get)

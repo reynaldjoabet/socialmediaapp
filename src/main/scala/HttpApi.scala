@@ -40,12 +40,14 @@ class HttpApi[F[_]](implicit F: Async[F]) {
     AutoSlash(http)
   } andThen { http: HttpRoutes[F] =>
     Timeout(60.seconds)(http)
+  } andThen { http: HttpRoutes[F] =>
+    CORS(http, corsConfig)
   }
 
-  private val loggers: HttpApp[F] => HttpApp[F] = { http: HttpApp[F] =>
-    RequestLogger.httpApp(true, true)(http)
-  } andThen { http: HttpApp[F] =>
-    ResponseLogger.httpApp(true, true)(http)
+  private val loggers = { http: HttpRoutes[F] =>
+    RequestLogger.httpRoutes(true, true)(http)
+  } andThen { http: HttpRoutes[F] =>
+    ResponseLogger.httpRoutes(true, true)(http)
   }
 
   private val httpRoutes: HttpRoutes[F] =
@@ -82,9 +84,9 @@ class HttpApi[F[_]](implicit F: Async[F]) {
 
   def prometheusMeteredRoutes(
     transactor: Transactor[F]
-  ) = prometheusReporter(middleware(httpRoutes(transactor)))
+  ) = prometheusReporter(loggers(middleware(httpRoutes(transactor))))
 
-  val prometheusMeteredRoutes = prometheusReporter(middleware(httpRoutes))
+  val prometheusMeteredRoutes = prometheusReporter(loggers(middleware(httpRoutes)))
 
   private def prometheusReporter(
     httpRoutes: HttpRoutes[F]

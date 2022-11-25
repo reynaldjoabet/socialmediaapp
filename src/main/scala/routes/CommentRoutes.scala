@@ -5,7 +5,7 @@ import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import api._
 import org.http4s._
-import authorization.AuthorizationMiddleware
+import authentication.AuthenticationMiddleware
 import services._
 import db.Doobie._
 import doobie.util.transactor._
@@ -80,7 +80,7 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
   }
 
   val commentRoutes = Router(
-    prefix -> AuthorizationMiddleware(routes)
+    prefix -> AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

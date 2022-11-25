@@ -6,7 +6,7 @@ import cats.effect.kernel.Async
 import api._
 import org.http4s.server.AuthMiddleware
 import services._
-import authorization.AuthorizationMiddleware
+import authentication.AuthenticationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
@@ -80,7 +80,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
   }
 
   val likesRoutes = Router(
-    prefix -> AuthorizationMiddleware(routes)
+    prefix -> AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

@@ -7,7 +7,7 @@ import org.http4s.server.AuthMiddleware
 import api._
 import org.http4s._
 import db.Doobie._
-import authorization.AuthorizationMiddleware
+import authentication.AuthenticationMiddleware
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
@@ -83,7 +83,7 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
   }
 
   val commentRoutes = Router(
-    prefix -> AuthorizationMiddleware(routes)
+    prefix -> AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
