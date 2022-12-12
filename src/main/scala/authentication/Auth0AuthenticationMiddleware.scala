@@ -3,6 +3,7 @@ package authentication
 import cats.Applicative
 import cats.data.Kleisli
 import cats.data.OptionT
+import cats.effect.IO
 import cats.effect.kernel.Async
 import org.http4s.Credentials.Token
 import org.http4s.AuthScheme
@@ -11,16 +12,16 @@ import org.http4s.Response
 import org.http4s.Status
 import org.http4s.headers.Authorization
 import org.http4s.server.HttpMiddleware
-import org.http4s.server.middleware.Caching
+import pdi.jwt.JwtClaim
 
 import scala.util.Failure
 import scala.util.Success
 import org.http4s.HttpRoutes
-import org.http4s.headers.Cookie
+import org.http4s.server.AuthMiddleware
+import org.http4s.ContextRequest
+import org.http4s.AuthedRoutes
 
-import scala.util.Random
-
-object AuthenticationMiddleware {
+object Auth0AuthenticationMiddleware {
 
   // Status.Forbidden for authorisation failure
   // Status.Unauthorized for authentication failure
@@ -29,7 +30,7 @@ object AuthenticationMiddleware {
   private def defaultAuthFailure[F[_]](
     implicit
     F: Applicative[F]
-  ): Request[F] => F[Response[F]] = _ => F.pure(Response[F](Status.Forbidden))
+  ): Request[F] => F[Response[F]] = _ => F.pure(Response[F](Status.Unauthorized))
 
   private def getBearerToken[F[_]](
     request: Request[F]
@@ -46,9 +47,13 @@ object AuthenticationMiddleware {
 
   def apply[F[_]: Async](
     httpRoutes: HttpRoutes[F]
-  ) = authenticate[F](defaultAuthFailure).apply(httpRoutes)
+  ): HttpRoutes[F] = authorizeRoutes[F](defaultAuthFailure).apply(httpRoutes)
 
-  private def authenticate[F[_]: Async](
+  def authorizeAuthedRoutes[T, F[_]: Async](
+    httpRoutes: AuthedRoutes[T, F]
+  ): HttpRoutes[F] = authorizeAuthedRoutes(defaultAuthFailure).apply(httpRoutes)
+
+  private def authorizeRoutes[F[_]: Async](
     onAuthFailure: Request[F] => F[Response[F]]
   ): HttpMiddleware[F] =
     service =>
@@ -58,6 +63,24 @@ object AuthenticationMiddleware {
             AuthenticationService.validateJwt(value) match {
               case Failure(exception) => OptionT.liftF(onAuthFailure(request))
               case Success(value)     => service(request)
+
+            }
+          case None => OptionT.liftF(onAuthFailure(request))
+        }
+
+      }
+
+  private def authorizeAuthedRoutes[T, F[_]: Async](
+    onAuthFailure: Request[F] => F[Response[F]]
+  ): AuthMiddleware[F, T] =
+    service =>
+      Kleisli { request: Request[F] =>
+        getBearerToken(request) match {
+          case Some(value) =>
+            AuthenticationService.validateJwt(value) match {
+              case Failure(exception) => OptionT.liftF(onAuthFailure(request))
+              case Success(claim)     => service(ContextRequest(claim.asInstanceOf[T], request))
+
             }
           case None => OptionT.liftF(onAuthFailure(request))
         }

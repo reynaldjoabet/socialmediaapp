@@ -8,15 +8,23 @@ import com.comcast.ip4s.Port
 import db.DBMigration
 import db.Doobie
 import doobie.util.transactor._
-import org.http4s.HttpRoutes
+import org.http4s._
+import cats.implicits._
+import org.http4s.dsl.Http4sDsl
 
 object Server {
-
+  private  val ds=Http4sDsl[IO]
+  import  ds._
+private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
+   case th: Throwable=>
+     th.printStackTrace()
+     std.Console[IO].error(s"InternalServerError: $th") *> InternalServerError(s"InternalServerError: $th")
+ }
   private def prometheusMeteredRoutes[F[_]: Async](
     transactor: Transactor[F]
   ) = HttpApi.make[F].prometheusMeteredRoutes(transactor)
 
-  val prometheusMeteredRoutes = HttpApi.make[IO].prometheusMeteredRoutes
+  private val prometheusMeteredRoutes = HttpApi.make[IO].prometheusMeteredRoutes
   private val httpApp = HttpApi.make[IO].middlewareHttpApp
 
   private val meteredApp = HttpApi.make[IO].meteredApp
@@ -39,6 +47,7 @@ object Server {
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
         .default[IO]
+        .withErrorHandler(errorhandler)
         .withHttpApp(app)
         .withPort(Port.fromInt(serverConfig.port).get)
         .withHost(Host.fromString(serverConfig.host).get)
@@ -54,16 +63,17 @@ object Server {
         )
     } yield ()
 
-  def prometheusServer(httpRoutes: HttpRoutes[IO]): IO[Unit] =
+  private def prometheusServer(httpRoutes: HttpRoutes[IO]): IO[Unit] =
     for {
       appConfig <- AppConfiguration.appConfig[IO]
       serverConfig = appConfig.serverConfig
       auth0Config = appConfig.auth0Config
-
-      // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
+  
+       //_ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
         .default[IO]
+        .withErrorHandler(errorhandler)
         .withHttpApp(httpRoutes.orNotFound)
         .withPort(Port.fromInt(serverConfig.port).get)
         .withHost(Host.fromString(serverConfig.host).get)
@@ -90,6 +100,7 @@ object Server {
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
         .default[IO]
+        .withErrorHandler(errorhandler)
         .withHttpApp(app)
         .withPort(Port.fromInt(serverConfig.port).get)
         .withHost(Host.fromString(serverConfig.host).get)

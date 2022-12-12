@@ -2,7 +2,7 @@
 echo " make sure the server is running"
 echo " Sending requests to localhost:8080/api/users/register"
 
-for i in {1..10}
+for i in {1..1000}
  do
   curl --request POST -sL -i -v --header "Content-Type: application/json" --url 'http://localhost:8080/api/users/register' --data  '{
     "username":"test'$i'",

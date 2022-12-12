@@ -6,7 +6,7 @@ import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import services._
 import api._
-import authentication.AuthenticationMiddleware
+import authentication.Auth0AuthenticationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
@@ -18,7 +18,7 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
   import org.http4s.server.Router
   private object UserId extends QueryParamDecoderMatcher[Int]("userId")
   private object PostId extends QueryParamDecoderMatcher[Int]("postId")
-  private val prefix = "api/posts"
+  private val prefix = "/api/posts"
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root =>
@@ -59,7 +59,7 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
             .savePost(
               post.description,
               post.image,
-              post.userId,
+              post.userId
             )
             .flatMap(Ok(_))
         }
@@ -81,7 +81,7 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
   }
 
   val postRoutes = Router(
-    prefix -> AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
@@ -91,6 +91,6 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
 }
 
 object PostRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]) = PostRoutes[F](PostService(transactor))
-  def make[F[_]: Async]() = PostRoutes[F](PostService(xa))
+  def make[F[_]: Async](transactor: Transactor[F]): PostRoutes[F] = PostRoutes[F](PostService(transactor))
+  def make[F[_]: Async](): PostRoutes[F] = PostRoutes[F](PostService(xa))
 }

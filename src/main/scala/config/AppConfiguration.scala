@@ -8,7 +8,7 @@ import cats.implicits._
 final case class AppConfiguration private (
   flyway: FlywayConfiguration,
   serverConfig: ServerConfiguration,
-  auth0Config: Auth0Configuration,
+  auth0Config: Auth0Configuration
 )
 
 object AppConfiguration {
@@ -17,7 +17,7 @@ object AppConfiguration {
     for {
       serverConfig <- ServerConfiguration.serverConfig[F]
       flywayConfig <- FlywayConfiguration.flywayConfig[F]
-      auth0Config <- Auth0Configuration.auth0Config[F]
+      auth0Config <- Auth0Configuration.auth0Config2[F]
     } yield AppConfiguration(flywayConfig, serverConfig, auth0Config)
 
 }

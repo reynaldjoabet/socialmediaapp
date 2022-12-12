@@ -5,12 +5,16 @@ import pdi.jwt.JwtAlgorithm
 import pdi.jwt.JwtBase64
 import pdi.jwt.JwtClaim
 import pdi.jwt.JwtCirce
+import com.auth0.jwk.JwkException
 
 import java.time.Clock
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 import cats.effect.IO
+import pdi.jwt.JwtHeader
+import cats.effect.kernel.Async
+import com.auth0.jwk.Jwk
 
 object AuthenticationService {
 
@@ -42,9 +46,23 @@ object AuthenticationService {
       claims <- JwtCirce.decode(
         token,
         jwk.getPublicKey,
-        Seq(JwtAlgorithm.RS256),
+        Seq(JwtAlgorithm.RS256)
       ) // Decode the token using the secret key
+      k=println(claims.issuer)
       _ <- validateClaims(claims) // validate the data stored inside the token
+    } yield claims
+
+  def validateJwt2(token: String): IO[JwtClaim] =
+    for {
+      jwk <- IO.fromTry(getJwk(token)) // Get the secret key for this token
+      claims <- IO.fromTry(
+        JwtCirce.decode(
+          token,
+          jwk.getPublicKey,
+          Seq(JwtAlgorithm.RS256)
+        )
+      ) // Decode the token using the secret key
+      _ <- IO.fromTry(validateClaims(claims)) // validate the data stored inside the token
     } yield claims
 
   // Splits a JWT into it's 3 component parts
@@ -64,16 +82,31 @@ object AuthenticationService {
       }
 
   // Gets the JWK from the JWKS endpoint using the jwks-rsa library
-  private def getJwk(token: String) = {
-    val combined = splitToken andThen decodeElements
-    combined(token) flatMap { case (header, _, _) =>
-      val jwtHeader = JwtCirce.parseHeader(header) // extract the header
+  private def getJwk(token: String): Try[Jwk] =
+    (splitToken andThen decodeElements)(token) flatMap { case (header, _, _) =>
+      val jwtHeader: JwtHeader = JwtCirce.parseHeader(header) // extract the header
       val jwkProvider = new UrlJwkProvider(s"https://$domain")
 
       // Use jwkProvider to load the JWKS data and return the JWK
       jwtHeader.keyId.map { k =>
         Try(jwkProvider.get(k))
-      } getOrElse Failure(new Exception("Unable to retrieve kid"))
+      } getOrElse Failure(new JwkException("Unable to retrieve kid"))
+    }
+
+  private def getJwk[F[_]](
+    token: String,
+    domain: String
+  )(
+    implicit F: Async[F]
+  ): F[Jwk] = F.fromTry {
+    (splitToken andThen decodeElements)(token) flatMap { case (header, _, _) =>
+      val jwtHeader: JwtHeader = JwtCirce.parseHeader(header) // extract the header
+      val jwkProvider = new UrlJwkProvider(s"https://$domain")
+
+      // Use jwkProvider to load the JWKS data and return the JWK
+      jwtHeader.keyId.map { k =>
+        Try(jwkProvider.get(k))
+      } getOrElse Failure(new JwkException("Unable to retrieve kid"))
     }
   }
 
@@ -82,9 +115,20 @@ object AuthenticationService {
   private val validateClaims =
     (claims: JwtClaim) =>
       if (claims.isValid(issuer, audience)) {
+        
         Success(claims)
       } else {
         Failure(new Exception("The JWT did not pass validation"))
       }
+
+  private def validateClaims[F[_]: Async](
+    claims: JwtClaim,
+    issuer: String,
+    audience: String
+  ): F[JwtClaim] = Async[F].fromTry(if (claims.isValid(issuer, audience)) {
+    Success(claims)
+  } else {
+    Failure(new Exception("The JWT did not pass validation"))
+  })
 
 }

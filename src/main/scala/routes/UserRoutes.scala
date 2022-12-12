@@ -88,7 +88,7 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
 
 object UserRoutes {
 
-  def make[F[_]: Async]() = UserRoutes[F](UserService(xa))
+  def make[F[_]: Async](): UserRoutes[F] = UserRoutes[F](UserService(xa))
 
-  def make[F[_]: Async](transactor: Transactor[F]) = UserRoutes[F](UserService(transactor))
+  def make[F[_]: Async](transactor: Transactor[F]): UserRoutes[F] = UserRoutes[F](UserService(transactor))
 }

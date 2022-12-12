@@ -4,8 +4,8 @@ import org.http4s.dsl.Http4sDsl
 import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import api._
+import authentication.Auth0AuthenticationMiddleware
 import org.http4s._
-import authentication.AuthenticationMiddleware
 import services._
 import db.Doobie._
 import doobie.util.transactor._
@@ -17,7 +17,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
   import org.http4s.server.Router
   private object UserId extends QueryParamDecoderMatcher[Int]("userId")
   private object StoryId extends QueryParamDecoderMatcher[Int]("storyId")
-  private val prefix = "api/stories"
+  private val prefix = "/api/story"
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root / IntVar(userId) =>
@@ -57,7 +57,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
           storyService
             .saveStory(
               story.imageUrl,
-              story.userId,
+              story.userId
             )
             .flatMap(Ok(_))
         }
@@ -78,8 +78,8 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
     // .map(_.addCookie())
   }
 
-  val commentRoutes = Router(
-    prefix -> AuthenticationMiddleware(routes)
+  val storyRoutes = Router(
+    prefix -> Auth0AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
@@ -89,7 +89,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
 }
 
 object StoryRoutes {
-  def make[F[_]: Async]() = StoryRoutes[F](StoryService(xa))
+  def make[F[_]: Async](): StoryRoutes[F] = StoryRoutes[F](StoryService(xa))
 
-  def make[F[_]: Async](transactor: Transactor[F]) = StoryRoutes[F](StoryService(transactor))
+  def make[F[_]: Async](transactor: Transactor[F]): StoryRoutes[F] = StoryRoutes[F](StoryService(transactor))
 }

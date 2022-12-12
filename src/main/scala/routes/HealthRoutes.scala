@@ -11,7 +11,7 @@ case class HealthRoutes[F[_]: Async]() extends Http4sDsl[F] {
 
   import org.http4s.server.Router
 
-  private val prefix = ""
+  private val prefix = "/"
 
   private val routes = HttpRoutes.of[F] { case GET -> Root / "health" =>
     Ok("app works just fine") // .map(_.addCookie())

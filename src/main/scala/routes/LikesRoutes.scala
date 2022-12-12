@@ -4,9 +4,9 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s._
 import cats.effect.kernel.Async
 import api._
+import authentication.Auth0AuthenticationMiddleware
 import org.http4s.server.AuthMiddleware
 import services._
-import authentication.AuthenticationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
@@ -18,7 +18,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
   import org.http4s.server.Router
   private object UserId extends QueryParamDecoderMatcher[Int]("userId")
   private object PostId extends QueryParamDecoderMatcher[Int]("postId")
-  private val prefix = "api/likes"
+  private val prefix = "/api/likes"
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root / IntVar(postId) =>
@@ -58,7 +58,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
           likesService
             .saveLikes(
               like.userId,
-              like.postId,
+              like.postId
             )
             .flatMap(Ok(_))
         }
@@ -80,7 +80,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
   }
 
   val likesRoutes = Router(
-    prefix -> AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
@@ -90,6 +90,6 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
 }
 
 object LikesRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]) = LikesRoutes[F](LikesService(transactor))
-  def make[F[_]: Async]() = LikesRoutes[F](LikesService(xa))
+  def make[F[_]: Async](transactor: Transactor[F]): LikesRoutes[F] = LikesRoutes[F](LikesService(transactor))
+  def make[F[_]: Async](): LikesRoutes[F] = LikesRoutes[F](LikesService(xa))
 }

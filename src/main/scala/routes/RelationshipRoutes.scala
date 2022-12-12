@@ -5,9 +5,9 @@ import services._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.AuthMiddleware
 import api._
+import authentication.Auth0AuthenticationMiddleware
 import org.http4s._
 import db.Doobie._
-import authentication.AuthenticationMiddleware
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
@@ -19,7 +19,7 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
 
   private object UserId extends QueryParamDecoderMatcher[Int]("userId")
   private object RelationshipId extends QueryParamDecoderMatcher[Int]("relationshipId")
-  private val prefix = "api/relationships"
+  private val prefix = "/api/relationships"
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root / IntVar(followerUserId) =>
@@ -59,7 +59,7 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
           relationshipService
             .saveRelationship(
               relationship.follower_user_id,
-              relationship.followed_user_id,
+              relationship.followed_user_id
             )
             .flatMap(Ok(_))
         }
@@ -82,8 +82,8 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
     // .map(_.addCookie())
   }
 
-  val commentRoutes = Router(
-    prefix -> AuthenticationMiddleware(routes)
+  val relationshipRoutes = Router(
+    prefix -> Auth0AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
@@ -93,10 +93,10 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
 }
 
 object RelationshipRoutes {
-  def make[F[_]: Async]() = RelationshipRoutes[F](RelationshipService(xa))
+  def make[F[_]: Async](): RelationshipRoutes[F] = RelationshipRoutes[F](RelationshipService(xa))
 
   def make[F[_]: Async](
     transactor: Transactor[F]
-  ) = RelationshipRoutes[F](RelationshipService(transactor))
+  ): RelationshipRoutes[F] = RelationshipRoutes[F](RelationshipService(transactor))
 
 }

@@ -24,6 +24,7 @@ import io.prometheus.client.CollectorRegistry
 import org.http4s.Method._
 import org.http4s.metrics.dropwizard.Dropwizard
 import org.http4s.metrics.dropwizard.metricsService
+import doobie.util.transactor
 
 class HttpApi[F[_]](implicit F: Async[F]) {
 
@@ -54,7 +55,7 @@ class HttpApi[F[_]](implicit F: Async[F]) {
     HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
       CommentRoutes.make[F].commentRoutes <+> PostRoutes.make[F].postRoutes <+> LikesRoutes
         .make[F]
-        .likesRoutes
+        .likesRoutes <+>StoryRoutes.make[F].storyRoutes <+> RelationshipRoutes.make[F].relationshipRoutes
 
   private def httpRoutes(transactor: Transactor[F]): HttpRoutes[F] =
     HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
@@ -62,7 +63,7 @@ class HttpApi[F[_]](implicit F: Async[F]) {
         .make[F](transactor)
         .postRoutes <+> LikesRoutes
         .make[F](transactor)
-        .likesRoutes
+        .likesRoutes <+>StoryRoutes.make[F](transactor).storyRoutes <+> RelationshipRoutes.make[F](transactor).relationshipRoutes
 
   def middlewareHttpApp(transactor: Transactor[F]) = middleware(httpRoutes(transactor)).orNotFound
 
@@ -116,5 +117,5 @@ class HttpApi[F[_]](implicit F: Async[F]) {
 }
 
 object HttpApi {
-  def make[F[_]: Async]() = new HttpApi
+  def make[F[_]: Async](): HttpApi[F] = new HttpApi
 }

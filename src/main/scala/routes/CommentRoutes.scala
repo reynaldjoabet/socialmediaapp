@@ -4,8 +4,8 @@ import org.http4s.dsl.Http4sDsl
 import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import api._
+import authentication.Auth0AuthenticationMiddleware
 import org.http4s._
-import authentication.AuthenticationMiddleware
 import services._
 import db.Doobie._
 import doobie.util.transactor._
@@ -21,7 +21,7 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
 
   import org.http4s.server.Router
 
-  private val prefix = "api/comments"
+  private val prefix = "/api/comments"
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root / IntVar(postId) =>
@@ -80,7 +80,7 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
   }
 
   val commentRoutes = Router(
-    prefix -> AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthenticationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
@@ -90,7 +90,7 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
 }
 
 object CommentRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]) = CommentRoutes[F](CommentService(transactor))
-  def make[F[_]: Async] = CommentRoutes[F](CommentService(xa))
+  def make[F[_]: Async](transactor: Transactor[F]): CommentRoutes[F] = CommentRoutes[F](CommentService(transactor))
+  def make[F[_]: Async]: CommentRoutes[F] = CommentRoutes[F](CommentService(xa))
 
 }
