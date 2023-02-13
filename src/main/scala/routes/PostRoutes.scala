@@ -6,7 +6,7 @@ import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import services._
 import api._
-import authentication.Auth0AuthenticationMiddleware
+import authorization.Auth0AuthorizationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
@@ -81,7 +81,7 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
   }
 
   val postRoutes = Router(
-    prefix -> Auth0AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthorizationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

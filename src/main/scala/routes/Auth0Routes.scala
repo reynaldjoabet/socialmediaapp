@@ -7,7 +7,7 @@ import org.http4s.server.AuthMiddleware
 import api._
 import org.http4s._
 import db.Doobie._
-import authentication.Auth0AuthenticationMiddleware
+import authorization.Auth0AuthorizationMiddleware
 import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
@@ -35,7 +35,7 @@ final case class Auth0Routes[F[_]: Async]() extends Http4sDsl[F] {
   }
 
   val auth0Routes = Router(
-    "/" -> Auth0AuthenticationMiddleware(routes)
+    "/" -> Auth0AuthorizationMiddleware(routes)
   )
 
 }

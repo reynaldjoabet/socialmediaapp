@@ -11,6 +11,9 @@ import doobie.util.transactor._
 import org.http4s._
 import cats.implicits._
 import org.http4s.dsl.Http4sDsl
+import cats.effect
+import cats.data.Kleisli
+import cats.data
 
 object Server {
   private  val ds=Http4sDsl[IO]
@@ -24,8 +27,8 @@ private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
     transactor: Transactor[F]
   ) = HttpApi.make[F].prometheusMeteredRoutes(transactor)
 
-  private val prometheusMeteredRoutes = HttpApi.make[IO].prometheusMeteredRoutes
-  private val httpApp = HttpApi.make[IO].middlewareHttpApp
+  private val prometheusMeteredRoutes: Resource[IO,HttpRoutes[IO]] = HttpApi.make[IO].prometheusMeteredRoutes
+  private val httpApp: Kleisli[IO,Request[IO],Response[IO]] = HttpApi.make[IO].middlewareHttpApp
 
   private val meteredApp = HttpApi.make[IO].meteredApp
 

@@ -6,7 +6,7 @@ import cats.effect.kernel.Async
 import cats.implicits._
 import org.http4s.implicits._
 import api._
-import authentication.Auth0AuthenticationMiddleware
+import authorization.Auth0AuthorizationMiddleware
 import doobie.util.transactor._
 import org.http4s.server.AuthMiddleware
 
@@ -25,7 +25,7 @@ final case class LogoutRoutes[F[_]: Async]() extends Http4sDsl[F] {
   }
 
   val logoutRoutes = Router(
-    prefix -> Auth0AuthenticationMiddleware(routes)
+    prefix ->Auth0AuthorizationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

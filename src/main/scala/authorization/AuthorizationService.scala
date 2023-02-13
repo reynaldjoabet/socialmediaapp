@@ -1,5 +1,5 @@
-package authentication
 
+package authorization
 import com.auth0.jwk.UrlJwkProvider
 import pdi.jwt.JwtAlgorithm
 import pdi.jwt.JwtBase64
@@ -16,7 +16,7 @@ import pdi.jwt.JwtHeader
 import cats.effect.kernel.Async
 import com.auth0.jwk.Jwk
 
-object AuthenticationService {
+object AuthorizationService {
 
   private implicit val clock = Clock.systemUTC()
   // A regex that defines the JWT pattern and allows us to
@@ -115,7 +115,7 @@ object AuthenticationService {
   private val validateClaims =
     (claims: JwtClaim) =>
       if (claims.isValid(issuer, audience)) {
-        
+        println(claims.toJson)
         Success(claims)
       } else {
         Failure(new Exception("The JWT did not pass validation"))

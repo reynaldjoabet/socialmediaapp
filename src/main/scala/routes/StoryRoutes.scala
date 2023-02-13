@@ -4,7 +4,7 @@ import org.http4s.dsl.Http4sDsl
 import cats.effect.kernel.Async
 import org.http4s.server.AuthMiddleware
 import api._
-import authentication.Auth0AuthenticationMiddleware
+import authorization.Auth0AuthorizationMiddleware
 import org.http4s._
 import services._
 import db.Doobie._
@@ -79,7 +79,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
   }
 
   val storyRoutes = Router(
-    prefix -> Auth0AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthorizationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

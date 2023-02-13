@@ -4,7 +4,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s._
 import cats.effect.kernel.Async
 import api._
-import authentication.Auth0AuthenticationMiddleware
+import authorization.Auth0AuthorizationMiddleware
 import org.http4s.server.AuthMiddleware
 import services._
 import db.Doobie._
@@ -80,7 +80,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
   }
 
   val likesRoutes = Router(
-    prefix -> Auth0AuthenticationMiddleware(routes)
+    prefix -> Auth0AuthorizationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
