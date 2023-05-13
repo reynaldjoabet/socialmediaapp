@@ -25,7 +25,7 @@ final case class LogoutRoutes[F[_]: Async]() extends Http4sDsl[F] {
   }
 
   val logoutRoutes = Router(
-    prefix ->Auth0AuthorizationMiddleware(routes)
+    prefix -> Auth0AuthorizationMiddleware(routes)
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(

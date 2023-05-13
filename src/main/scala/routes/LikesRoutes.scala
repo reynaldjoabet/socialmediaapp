@@ -90,6 +90,10 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
 }
 
 object LikesRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]): LikesRoutes[F] = LikesRoutes[F](LikesService(transactor))
+
+  def make[F[_]: Async](transactor: Transactor[F]): LikesRoutes[F] = LikesRoutes[F](
+    LikesService(transactor)
+  )
+
   def make[F[_]: Async](): LikesRoutes[F] = LikesRoutes[F](LikesService(xa))
 }

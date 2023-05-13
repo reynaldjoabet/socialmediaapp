@@ -21,7 +21,7 @@ final case class UserService[F[_]: Async](private val xa: Transactor[F]) {
     coverPicture: Option[String],
     profilePicture: Option[String],
     city: Option[String],
-    website: Option[String],
+    website: Option[String]
   ): F[Int] =
     sql"INSERT INTO users (username,email,password,name,cover_picture,profile_picture,city,website) VALUES($username,$email,$password,$name,$coverPicture,$profilePicture,$city,$website)"
       .update

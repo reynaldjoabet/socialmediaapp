@@ -25,37 +25,43 @@ import org.http4s.Method._
 import org.http4s.metrics.dropwizard.Dropwizard
 import org.http4s.metrics.dropwizard.metricsService
 import doobie.util.transactor
+import org.http4s.server.Middleware
+import org.typelevel.ci._
 
-class HttpApi[F[_]](implicit F: Async[F]) {
+class HttpApi[F[_]](
+  implicit F: Async[F]
+) {
 
   // private  val middleware= AuthorizationMiddleware
-
-  private val corsConfig = CORSConfig
-    .default
-    .withAnyOrigin(false)
-    .withAllowCredentials(false)
-    .withAllowedMethods(Some(Set(POST, PUT, GET, DELETE)))
-    .withAllowedOrigins(Set("http://localhost:3000"))
+  private val corsService = CORS
+    .policy
+    .withAllowOriginHost(Set("http://localhost:3000"))
+    .withAllowMethodsIn(Set(POST, PUT, GET, DELETE))
+    .withAllowCredentials(false) //set to true for csrf// The default behavior of cross-origin resource requests is for
+    // requests to be passed without credentials like cookies and the Authorization header
+    .withAllowHeadersIn(Set(ci"X-Csrf-Token", ci"Content-Type"))
 
   private val middleware: HttpRoutes[F] => HttpRoutes[F] = { http: HttpRoutes[F] =>
     AutoSlash(http)
   } andThen { http: HttpRoutes[F] =>
     Timeout(60.seconds)(http)
   } andThen { http: HttpRoutes[F] =>
-    CORS(http, corsConfig)
+    corsService(http)
   }
 
   private val loggers = { http: HttpRoutes[F] =>
-    RequestLogger.httpRoutes(true, true)(http)
+    RequestLogger.httpRoutes(true, true, _ => false)(http)
   } andThen { http: HttpRoutes[F] =>
-    ResponseLogger.httpRoutes(true, true)(http)
+    ResponseLogger.httpRoutes(true, true, _ => false)(http)
   }
 
   private val httpRoutes: HttpRoutes[F] =
     HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
       CommentRoutes.make[F].commentRoutes <+> PostRoutes.make[F].postRoutes <+> LikesRoutes
         .make[F]
-        .likesRoutes <+>StoryRoutes.make[F].storyRoutes <+> RelationshipRoutes.make[F].relationshipRoutes
+        .likesRoutes <+> StoryRoutes.make[F].storyRoutes <+> RelationshipRoutes
+        .make[F]
+        .relationshipRoutes
 
   private def httpRoutes(transactor: Transactor[F]): HttpRoutes[F] =
     HealthRoutes[F].router <+> UserRoutes.make[F].router <+> LogoutRoutes[F].logoutRoutes <+>
@@ -63,9 +69,12 @@ class HttpApi[F[_]](implicit F: Async[F]) {
         .make[F](transactor)
         .postRoutes <+> LikesRoutes
         .make[F](transactor)
-        .likesRoutes <+>StoryRoutes.make[F](transactor).storyRoutes <+> RelationshipRoutes.make[F](transactor).relationshipRoutes
+        .likesRoutes <+> StoryRoutes.make[F](transactor).storyRoutes <+> RelationshipRoutes
+        .make[F](transactor)
+        .relationshipRoutes <+> Auth0Routes.make[F](transactor).auth0Routes
 
-  def middlewareHttpApp(transactor: Transactor[F]) = middleware(httpRoutes(transactor)).orNotFound
+  def middlewareHttpApp(transactor: Transactor[F]) =
+    loggers.andThen(middleware)(httpRoutes(transactor)).orNotFound
 
   val middlewareHttpApp = middleware(httpRoutes).orNotFound
 
@@ -96,7 +105,7 @@ class HttpApi[F[_]](implicit F: Async[F]) {
       prometheusExportService <- PrometheusExportService.build[F]
       prometheusMetricsOps <- Prometheus.metricsOps(
         prometheusExportService.collectorRegistry,
-        "server",
+        "server"
       )
     } yield Metrics(prometheusMetricsOps)(httpRoutes) <+> prometheusExportService.routes
 
@@ -118,4 +127,36 @@ class HttpApi[F[_]](implicit F: Async[F]) {
 
 object HttpApi {
   def make[F[_]: Async](): HttpApi[F] = new HttpApi
+
+  private val cookieName = "csrf-token"
+
+  private def token[F[_]: Async]() = CSRF.generateSigningKey[F]()
+
+  def csrfService[F[_]: Async]()
+    : F[Middleware[F, Request[F], Response[F], Request[F], Response[F]]] = token.map { key =>
+    println(key.getAlgorithm())
+    println(key.getEncoded().toList)
+    val crsfBulider: CSRF.CSRFBuilder[F, F] = CSRF[F, F](
+      key,
+      request => CSRF.defaultOriginCheck[F](request, "localhost", Uri.Scheme.http, None)
+    )
+    crsfBulider // .withCookieName(cookieName)
+      .withCookieDomain(Some("localhost"))
+      .withCookiePath(Some("/"))
+      .build
+      .validate()
+  }
+
+  def csrfService1[F[_]: Async]() = CSRF
+    .withGeneratedKey[F, F](request =>
+      CSRF.defaultOriginCheck(request, "localhost", Uri.Scheme.http, None)
+    )
+    .map(builder =>
+      builder
+        .withCookieName(cookieName)
+        .withCookieDomain(Some("localhost"))
+        .build
+        .validate()
+    )
+
 }

@@ -12,7 +12,7 @@ final case class CreateUser(
   coverPicture: Option[String],
   profilePicture: Option[String],
   city: Option[String],
-  website: Option[String],
+  website: Option[String]
 )
 
 object CreateUser {

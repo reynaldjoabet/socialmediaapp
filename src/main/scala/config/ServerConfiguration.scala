@@ -10,7 +10,9 @@ final case class ServerConfiguration private (host: String, port: Int)
 object ServerConfiguration {
   private val hocon = hoconAt("server")
 
-  def serverConfig[F[_]](implicit ev: Async[F]): F[ServerConfiguration] =
+  def serverConfig[F[_]](
+    implicit ev: Async[F]
+  ): F[ServerConfiguration] =
     (
       hocon("port").as[Int],
       hocon("host").as[String],

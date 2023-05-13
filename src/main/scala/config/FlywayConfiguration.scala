@@ -8,7 +8,9 @@ final case class FlywayConfiguration private (url: String, username: String, pas
 object FlywayConfiguration {
   private val hocon = hoconAt("flyway")
 
-  def flywayConfig[F[_]](implicit F: Async[F]): F[FlywayConfiguration] =
+  def flywayConfig[F[_]](
+    implicit F: Async[F]
+  ): F[FlywayConfiguration] =
     (
       hocon("url").as[String],
       hocon("username").as[String],

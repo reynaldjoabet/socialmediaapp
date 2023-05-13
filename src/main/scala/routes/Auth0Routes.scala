@@ -16,26 +16,55 @@ import org.http4s.server.middleware.HttpsRedirect
 import org.http4s.headers.`Content-Type`
 import org.http4s.headers.Location
 
-final case class Auth0Routes[F[_]: Async]() extends Http4sDsl[F] {
+import cats.effect._
+import cats.effect.std.Dispatcher
+
+import cats.implicits._
+import fs2.{Chunk, Stream}
+
+import io.circe.Json
+import org.http4s.circe.jsonOf
+//import org.http4s._
+//import org.http4s.circe._
+import org.http4s.client._
+import org.http4s.client.dsl.Http4sClientDsl
+import org.http4s.dsl.io._
+import org.http4s.headers._
+import org.http4s.implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import org.http4s.server.AuthMiddleware
+import org.http4s._
+
+final case class Auth0Routes[F[_]: Async](authoService: Auth0Service[F]) extends Http4sDsl[F] {
   import org.http4s.server.Router
-  object CodeParam extends QueryParamDecoderMatcher[String]("code")
+//object CodeParamp extends QueryParamDecoderMatcher[String]("code")
+  object CodeParam extends OptionalQueryParamDecoderMatcher[String]("code")
 
-  private val routes = HttpRoutes.of[F] {
+  private val routes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ GET -> Root / "token" :? CodeParam(authorizationCode) =>
+      req.cookies.find(_.name == "")
+      authorizationCode match {
+        case None => Response(Status.Unauthorized).pure[F]
+        case Some(code) =>
+          val client = JavaNetClientBuilder[F].create
+          val clientId = "NMXhdvC1"
+          val clientSecret = "bRLP2YxR"
 
-    case GET -> Root / authorize => {
-      val headers = Headers(
-        Location(Uri.unsafeFromString("https://")),
-        `Content-Type`(MediaType.text.xml)
-      )
-      Async[F].pure(Response[F](status = TemporaryRedirect, headers = headers))
-    }
+          (for {
 
-    case GET -> Root / oauth / token => TemporaryRedirect()
+            accessToken <- authoService.fetchBearerToken(client, clientId, clientSecret, code)
+
+            data <- authoService.fetchDataFromApiJson(client, accessToken)
+          } yield data)
+            .flatMap(Ok(_))
+      }
 
   }
 
-  val auth0Routes = Router(
-    "/" -> Auth0AuthorizationMiddleware(routes)
-  )
+  val auth0Routes = Router("api" -> routes)
+}
 
+object Auth0Routes {
+  def make[F[_]: Async](transactor: Transactor[F]): Auth0Routes[F] = Auth0Routes[F](Auth0Service())
 }

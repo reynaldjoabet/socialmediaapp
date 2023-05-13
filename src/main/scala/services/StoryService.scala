@@ -15,7 +15,7 @@ final case class StoryService[F[_]: Async](private val xa: Transactor[F]) {
 
   def saveStory(
     imageUrl: String,
-    userId: Int,
+    userId: Int
   ): F[Story] = sql"INSERT INTO stories  (image_url,user_id) VALUES($imageUrl,$userId)"
     .update
     .withUniqueGeneratedKeys[Story]("id", "image_url", "user_id")
@@ -23,7 +23,7 @@ final case class StoryService[F[_]: Async](private val xa: Transactor[F]) {
 
   def deleteStory(
     storyId: Int,
-    userId: Int,
+    userId: Int
   ): F[Int] = sql"delete from stories where id = $storyId AND user_id=$userId"
     .update
     .run

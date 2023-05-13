@@ -91,6 +91,10 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
 }
 
 object PostRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]): PostRoutes[F] = PostRoutes[F](PostService(transactor))
+
+  def make[F[_]: Async](transactor: Transactor[F]): PostRoutes[F] = PostRoutes[F](
+    PostService(transactor)
+  )
+
   def make[F[_]: Async](): PostRoutes[F] = PostRoutes[F](PostService(xa))
 }

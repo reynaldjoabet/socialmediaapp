@@ -19,7 +19,7 @@ object Doobie {
     "org.postgresql.Driver",
     "jdbc:postgresql:social_db",
     "postgres",
-    "",
+    ""
   )
 
 //HikariTransactor
@@ -28,7 +28,7 @@ object Doobie {
     "jdbc:postgresql:social_db",
     "postgres",
     "",
-    ec,
+    ec
   )
 
   // A transactor that gets connections from java.sql.DriverManager and executes blocking operations
@@ -36,7 +36,7 @@ object Doobie {
     "org.postgresql.Driver", // driver classname
     "jdbc:postgresql:social_db", // connect URL (driver-specific)
     "postgres", // user
-    "", // password
+    "" // password
   )
 
 }

@@ -12,6 +12,8 @@ import doobie.util.transactor._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
 import cats.implicits._
+import org.http4s.headers.`Content-Type`
+import org.typelevel.ci.CIString
 
 final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
   extends Http4sDsl[F] {
@@ -74,6 +76,7 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
       commentService
         .deleteComment(commentId, userId)
         .flatMap(_ => Ok())
+        // .map(_.addHeader(Header.Raw(CIString("Content-Security-Policy"),"script-src 'none'")))
         .handleErrorWith(e => InternalServerError(e.toString()))
 
     // .map(_.addCookie())
@@ -90,7 +93,11 @@ final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
 }
 
 object CommentRoutes {
-  def make[F[_]: Async](transactor: Transactor[F]): CommentRoutes[F] = CommentRoutes[F](CommentService(transactor))
+
+  def make[F[_]: Async](transactor: Transactor[F]): CommentRoutes[F] = CommentRoutes[F](
+    CommentService(transactor)
+  )
+
   def make[F[_]: Async]: CommentRoutes[F] = CommentRoutes[F](CommentService(xa))
 
 }

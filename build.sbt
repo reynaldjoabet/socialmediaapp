@@ -4,7 +4,7 @@ ThisBuild / scalaVersion := "2.13.10"
 
 val http4sVersion = "0.23.16"
 val cirisVersion = "2.4.0"
-val circeVersion = "0.14.3"
+val circeVersion = "0.14.5"
 val flywayVersion = "9.8.3"
 val bcryptVersion = "0.4.3"
 val postgresVersion = "42.5.1"
@@ -18,7 +18,7 @@ def http4s(artifact: String): ModuleID = "org.http4s" %% s"http4s-$artifact" % h
 
 val circeCore = circe("core")
 val circeGeneric = circe("generic")
-
+val circeParser = circe("parser")
 val cirisCore = ciris("ciris")
 val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
 val fs2 = "co.fs2" %% "fs2-core" % fs2Version
@@ -73,5 +73,6 @@ lazy val root = (project in file("."))
       dropwizard,
       graphite,
       prometheus,
-    ),
+      circeParser
+    )
   )

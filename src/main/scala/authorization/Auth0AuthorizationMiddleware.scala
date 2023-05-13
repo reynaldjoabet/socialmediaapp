@@ -1,5 +1,5 @@
-
 package authorization
+
 import cats.Applicative
 import cats.data.Kleisli
 import cats.data.OptionT
@@ -21,6 +21,7 @@ import org.http4s.server.AuthMiddleware
 import org.http4s.ContextRequest
 import org.http4s.AuthedRoutes
 
+//Auth0JwtVerifier with a verifyAccessToken
 object Auth0AuthorizationMiddleware {
 
   // Status.Forbidden for authorisation failure
@@ -29,10 +30,10 @@ object Auth0AuthorizationMiddleware {
   // private val headerTokenRegex = """Bearer (.+?)""".r
 
   /*
-  401 Unauthorized is the status code to return when the client provides no credentials or invalid credentials. 
-  403 Forbidden is the status code to return when a client has valid credentials 
+  401 Unauthorized is the status code to return when the client provides no credentials or invalid credentials.
+  403 Forbidden is the status code to return when a client has valid credentials
   but not enough privileges to perform an action on a resource
-  */
+   */
   private def defaultAuthFailure[F[_]](
     implicit
     F: Applicative[F]
@@ -68,7 +69,7 @@ object Auth0AuthorizationMiddleware {
           case Some(value) =>
             AuthorizationService.validateJwt(value) match {
               case Failure(exception) => OptionT.liftF(onAuthFailure(request))
-              case Success(value)     => service(request)
+              case Success(claim)     => service(request)
 
             }
           case None => OptionT.liftF(onAuthFailure(request))
@@ -83,7 +84,7 @@ object Auth0AuthorizationMiddleware {
       Kleisli { request: Request[F] =>
         getBearerToken(request) match {
           case Some(value) =>
-          AuthorizationService.validateJwt(value) match {
+            AuthorizationService.validateJwt(value) match {
               case Failure(exception) => OptionT.liftF(onAuthFailure(request))
               case Success(claim)     => service(ContextRequest(claim.asInstanceOf[T], request))
 

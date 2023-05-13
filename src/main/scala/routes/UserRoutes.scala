@@ -41,7 +41,7 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
                         "sessionID",
                         UUID.randomUUID().toString(),
                         domain = Some("localhost"),
-                        path = Some("/"),
+                        path = Some("/")
                       )
                     )
                   )
@@ -73,7 +73,7 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
                     createUser.coverPicture,
                     createUser.profilePicture,
                     createUser.city,
-                    createUser.website,
+                    createUser.website
                   )
                   .flatMap(_ => Created())
 
@@ -90,5 +90,8 @@ object UserRoutes {
 
   def make[F[_]: Async](): UserRoutes[F] = UserRoutes[F](UserService(xa))
 
-  def make[F[_]: Async](transactor: Transactor[F]): UserRoutes[F] = UserRoutes[F](UserService(transactor))
+  def make[F[_]: Async](transactor: Transactor[F]): UserRoutes[F] = UserRoutes[F](
+    UserService(transactor)
+  )
+
 }

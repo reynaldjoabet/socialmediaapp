@@ -16,7 +16,7 @@ final case class PostService[F[_]: Async](private val xa: Transactor[F]) {
   def savePost(
     description: String,
     image: String,
-    userId: Int,
+    userId: Int
   ): F[Post] =
     sql"INSERT INTO posts  (descritpion,image,user_id) VALUES($description,$image,$userId)"
       .update
@@ -25,7 +25,7 @@ final case class PostService[F[_]: Async](private val xa: Transactor[F]) {
 
   def deletePost(
     postId: Int,
-    userId: Int,
+    userId: Int
   ): F[Int] = sql"delete from posts where id = $postId AND user_id=$userId"
     .update
     .run

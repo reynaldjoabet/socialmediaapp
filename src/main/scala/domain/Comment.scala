@@ -8,7 +8,7 @@ final case class Comment(
   description: String,
   createdAt: LocalDateTime,
   userId: Int,
-  postId: Int,
+  postId: Int
 )
 
 object Comment {

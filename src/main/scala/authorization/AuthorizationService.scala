@@ -1,5 +1,5 @@
-
 package authorization
+
 import com.auth0.jwk.UrlJwkProvider
 import pdi.jwt.JwtAlgorithm
 import pdi.jwt.JwtBase64
@@ -30,8 +30,8 @@ object AuthorizationService {
     * config.get[String]("auth0.audience")
     */
 
-  private val domain = System.getenv("AUTH0_DOMAIN")
-  private val audience = System.getenv("AUTH0_AUDIENCE")
+  private val domain = "bame" /// System.getenv("AUTH0_DOMAIN")
+  private val audience = "https" // System.getenv("AUTH0_AUDIENCE")
 
   /** // The issuer of the token. For Auth0, this is just your Auth0 // domain including the URI
     * scheme and a trailing slash. private def issuer = s"https://$domain/"
@@ -48,9 +48,11 @@ object AuthorizationService {
         jwk.getPublicKey,
         Seq(JwtAlgorithm.RS256)
       ) // Decode the token using the secret key
-      k=println(claims.issuer)
+      // f= println(claims)
       _ <- validateClaims(claims) // validate the data stored inside the token
     } yield claims
+
+  def validateJwt3(token: String): IO[JwtClaim] = IO.fromTry(validateJwt(token))
 
   def validateJwt2(token: String): IO[JwtClaim] =
     for {
@@ -80,6 +82,9 @@ object AuthorizationService {
       data map { case (header, body, sig) =>
         (JwtBase64.decodeString(header), JwtBase64.decodeString(body), sig)
       }
+
+  def extractPayload(token: String): Try[String] =
+    (splitToken andThen decodeElements)(token) flatMap { case (_, payload, _) => Try(payload) }
 
   // Gets the JWK from the JWKS endpoint using the jwks-rsa library
   private def getJwk(token: String): Try[Jwk] =
@@ -115,7 +120,6 @@ object AuthorizationService {
   private val validateClaims =
     (claims: JwtClaim) =>
       if (claims.isValid(issuer, audience)) {
-        println(claims.toJson)
         Success(claims)
       } else {
         Failure(new Exception("The JWT did not pass validation"))

@@ -13,22 +13,31 @@ import cats.implicits._
 import org.http4s.dsl.Http4sDsl
 import cats.effect
 import cats.data.Kleisli
-import cats.data
+import com.comcast.ip4s._
 
 object Server {
-  private  val ds=Http4sDsl[IO]
-  import  ds._
-private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
-   case th: Throwable=>
-     th.printStackTrace()
-     std.Console[IO].error(s"InternalServerError: $th") *> InternalServerError(s"InternalServerError: $th")
- }
+  private val ds = Http4sDsl[IO]
+  import ds._
+
+  val thePort = port"9000"
+  val theHost = host"localhost"
+  @inline val k = 9000
+
+  /// val n=host"${k}"
+  private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] = { case th: Throwable =>
+    th.printStackTrace()
+    std.Console[IO].error(s"InternalServerError: $th") *> InternalServerError(
+      s"InternalServerError: $th"
+    )
+  }
+
   private def prometheusMeteredRoutes[F[_]: Async](
     transactor: Transactor[F]
   ) = HttpApi.make[F].prometheusMeteredRoutes(transactor)
 
-  private val prometheusMeteredRoutes: Resource[IO,HttpRoutes[IO]] = HttpApi.make[IO].prometheusMeteredRoutes
-  private val httpApp: Kleisli[IO,Request[IO],Response[IO]] = HttpApi.make[IO].middlewareHttpApp
+  private val prometheusMeteredRoutes: Resource[IO, HttpRoutes[IO]] =
+    HttpApi.make[IO].prometheusMeteredRoutes
+  private val httpApp: Kleisli[IO, Request[IO], Response[IO]] = HttpApi.make[IO].middlewareHttpApp
 
   private val meteredApp = HttpApi.make[IO].meteredApp
 
@@ -46,6 +55,8 @@ private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
       serverConfig = appConfig.serverConfig
       auth0Config = appConfig.auth0Config
       app <- meteredApp
+
+      csrfMiddleware <- HttpApi.csrfService[IO]
       // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
@@ -71,8 +82,8 @@ private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
       appConfig <- AppConfiguration.appConfig[IO]
       serverConfig = appConfig.serverConfig
       auth0Config = appConfig.auth0Config
-  
-       //_ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
+      csrfMiddleware <- HttpApi.csrfService[IO]
+      // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
         .default[IO]
@@ -97,14 +108,14 @@ private val errorhandler: PartialFunction[Throwable, IO[Response[IO]]] ={
       appConfig <- AppConfiguration.appConfig[IO]
       serverConfig = appConfig.serverConfig
       auth0Config = appConfig.auth0Config
-      app <- meteredApp(transactor)
-
+      app = httpApp(transactor)
+      csrfMiddleware <- HttpApi.csrfService[IO]
       // _ <- IO.println(s"${auth0Config.audience} and ${auth0Config.domain}")
       _ <- DBMigration.migrate()
       _ <- EmberServerBuilder
         .default[IO]
         .withErrorHandler(errorhandler)
-        .withHttpApp(app)
+        .withHttpApp(csrfMiddleware(app))
         .withPort(Port.fromInt(serverConfig.port).get)
         .withHost(Host.fromString(serverConfig.host).get)
         // .withTLS()

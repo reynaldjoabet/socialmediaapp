@@ -20,7 +20,7 @@ final case class LikesService[F[_]: Async](private val xa: Transactor[F]) {
 
   def deleteLikes(
     userId: Int,
-    postId: Int,
+    postId: Int
   ): F[Int] = sql"delete from likes where user_id = $userId AND post_id=$postId"
     .update
     .run

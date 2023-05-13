@@ -7,7 +7,7 @@ final case class CreateComment(
   description: String,
   createdAt: LocalDateTime,
   userId: Int,
-  postId: Int,
+  postId: Int
 )
 
 object CreateComment {

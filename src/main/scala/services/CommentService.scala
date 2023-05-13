@@ -21,7 +21,7 @@ final case class CommentService[F[_]: Async](private val xa: Transactor[F]) {
     description: String,
     createdAt: LocalDateTime,
     userId: Int,
-    postId: Int,
+    postId: Int
   ): F[Comment] =
     sql"INSERT INTO comments  (description,created_at,user_id,post_id) VALUES($description,$createdAt,$userId,$postId)"
       .update
@@ -30,7 +30,7 @@ final case class CommentService[F[_]: Async](private val xa: Transactor[F]) {
 
   def deleteComment(
     commentId: Int,
-    userId: Int,
+    userId: Int
   ): F[Int] = sql"delete from comments where id = $commentId AND user_id=$userId"
     .update
     .run

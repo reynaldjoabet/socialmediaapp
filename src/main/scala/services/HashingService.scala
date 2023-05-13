@@ -27,7 +27,7 @@ object HashingService {
 
   def checkPassword(
     hash: String,
-    passwordToHash: String,
+    passwordToHash: String
   ): Boolean = BCrypt.checkpw(passwordToHash, hash)
 
 }

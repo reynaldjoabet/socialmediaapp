@@ -15,7 +15,7 @@ final case class RelationshipService[F[_]: Async](private val xa: Transactor[F])
 
   def saveRelationship(
     follower_user_id: Int,
-    followed_user_id: Int,
+    followed_user_id: Int
   ): F[Relationship] =
     sql"INSERT INTO relationships  (follower_user_id,followed_user_id) VALUES($follower_user_id,$followed_user_id)"
       .update
@@ -24,7 +24,7 @@ final case class RelationshipService[F[_]: Async](private val xa: Transactor[F])
 
   def deleteRelationship(
     followerUserId: Int,
-    followedUserId: Int,
+    followedUserId: Int
   ): F[Int] =
     sql"delete from relationships where follower_user_id = $followerUserId AND followed_user_id=$followedUserId"
       .update

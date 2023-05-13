@@ -7,7 +7,7 @@ final case class DataSourceConfiguration private (
   user: String,
   password: String,
   portNumber: Int,
-  serverName: String,
+  serverName: String
 )
 
 object DataSourceConfiguration {

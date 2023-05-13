@@ -91,5 +91,8 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
 object StoryRoutes {
   def make[F[_]: Async](): StoryRoutes[F] = StoryRoutes[F](StoryService(xa))
 
-  def make[F[_]: Async](transactor: Transactor[F]): StoryRoutes[F] = StoryRoutes[F](StoryService(transactor))
+  def make[F[_]: Async](transactor: Transactor[F]): StoryRoutes[F] = StoryRoutes[F](
+    StoryService(transactor)
+  )
+
 }

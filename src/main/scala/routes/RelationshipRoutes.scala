@@ -6,6 +6,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.server.AuthMiddleware
 import api._
 import authorization.Auth0AuthorizationMiddleware
+import authorization.RequireScopesMiddleware
 import org.http4s._
 import db.Doobie._
 import doobie.util.transactor._
@@ -82,8 +83,14 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
     // .map(_.addCookie())
   }
 
+  val middleware = { http: HttpRoutes[F] =>
+    Auth0AuthorizationMiddleware(http)
+  } andThen { http: HttpRoutes[F] =>
+    RequireScopesMiddleware(http, Set("read:challenges"))
+  }
+
   val relationshipRoutes = Router(
-    prefix -> Auth0AuthorizationMiddleware(routes)
+    prefix -> RequireScopesMiddleware(routes, Set("read:challenges", "write:challenges"))
   )
 
   def routes(authMiddleware: AuthMiddleware[F, LoginUser]): HttpRoutes[F] = Router(
