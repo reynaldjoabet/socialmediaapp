@@ -1,8 +1,9 @@
 package api
 
+import cats.effect.IO
+
 import io.circe.generic.semiauto.deriveCodec
 import org.http4s.circe.jsonOf
-import cats.effect.IO
 
 final case class CreateUser(
   username: String,

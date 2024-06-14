@@ -1,15 +1,16 @@
 package db
 
-import doobie._
-import doobie.implicits._
-import cats.effect.IO
-import doobie.util.transactor
+import scala.concurrent.ExecutionContext
+
 import cats.effect.kernel.{Async, Resource}
+import cats.effect.IO
+
+import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.hikari.HikariTransactor.newHikariTransactor
+import doobie.implicits._
+import doobie.util.transactor
 import doobie.util.transactor.Transactor.Aux
-
-import scala.concurrent.ExecutionContext
 
 object Doobie {
 
@@ -33,10 +34,10 @@ object Doobie {
 
   // A transactor that gets connections from java.sql.DriverManager and executes blocking operations
   val xa1: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", // driver classname
+    "org.postgresql.Driver",     // driver classname
     "jdbc:postgresql:social_db", // connect URL (driver-specific)
-    "postgres", // user
-    "" // password
+    "postgres",                  // user
+    ""                           // password
   )
 
 }

@@ -1,17 +1,18 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
-import org.http4s._
 import cats.effect.kernel.Async
+import cats.implicits._
+
 import api._
 import authorization.Auth0AuthorizationMiddleware
-import org.http4s.server.AuthMiddleware
-import services._
 import db.Doobie._
 import doobie.util.transactor._
-import org.http4s.circe.CirceEntityEncoder._
+import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
-import cats.implicits._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.server.AuthMiddleware
+import services._
 
 final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends Http4sDsl[F] {
 
@@ -30,9 +31,7 @@ final case class LikesRoutes[F[_]: Async](likesService: LikesService[F]) extends
       req
         .as[CreateLike]
         .flatMap { like =>
-          likesService
-            .saveLikes(like.userId, like.postId)
-            .flatMap(Ok(_))
+          likesService.saveLikes(like.userId, like.postId).flatMap(Ok(_))
         }
         .handleErrorWith(e => InternalServerError(e.toString()))
     case DELETE -> Root / IntVar(userId) / IntVar(postId) =>
@@ -96,4 +95,5 @@ object LikesRoutes {
   )
 
   def make[F[_]: Async](): LikesRoutes[F] = LikesRoutes[F](LikesService(xa))
+
 }

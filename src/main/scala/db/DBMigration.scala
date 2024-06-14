@@ -1,9 +1,10 @@
 package db
 
+import cats.effect.std
+import cats.effect.IO
+
 import config.FlywayConfiguration
 import org.flywaydb.core.Flyway
-import cats.effect.IO
-import cats.effect.std
 
 object DBMigration {
 
@@ -11,25 +12,25 @@ object DBMigration {
     for {
       flywayConfig <- FlywayConfiguration.flywayConfig[IO]
       flyway <- IO.delay(
-        Flyway
-          .configure()
-          .dataSource(flywayConfig.url, flywayConfig.username, flywayConfig.password)
-          .load()
-      )
+                  Flyway
+                    .configure()
+                    .dataSource(flywayConfig.url, flywayConfig.username, flywayConfig.password)
+                    .load()
+                )
       _ <- IO.delay(flyway.migrate())
     } yield ()
 
   def reset() =
     for {
-      _ <- std.Console[IO].println("RESETTING DATABASE!")
+      _            <- std.Console[IO].println("RESETTING DATABASE!")
       flywayConfig <- FlywayConfiguration.flywayConfig[IO]
       flyway <- IO.delay(
-        Flyway
-          .configure()
-          .dataSource(flywayConfig.url, flywayConfig.username, flywayConfig.password)
-          .cleanDisabled(false)
-          .load()
-      )
+                  Flyway
+                    .configure()
+                    .dataSource(flywayConfig.url, flywayConfig.username, flywayConfig.password)
+                    .cleanDisabled(false)
+                    .load()
+                )
       _ <- IO.delay(flyway.clean())
     } yield ()
 

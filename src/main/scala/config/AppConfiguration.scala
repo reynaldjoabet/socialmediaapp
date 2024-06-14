@@ -1,7 +1,6 @@
 package config
 
 import cats.effect.kernel.Async
-
 //import lt.dvim.ciris.Hocon._
 import cats.implicits._
 
@@ -17,7 +16,7 @@ object AppConfiguration {
     for {
       serverConfig <- ServerConfiguration.serverConfig[F]
       flywayConfig <- FlywayConfiguration.flywayConfig[F]
-      auth0Config <- Auth0Configuration.auth0Config2[F]
+      auth0Config  <- Auth0Configuration.auth0Config2[F]
     } yield AppConfiguration(flywayConfig, serverConfig, auth0Config)
 
 }

@@ -1,11 +1,12 @@
 package routes
 
+import cats.effect.kernel.Async
 import cats.effect.IO
+
+import doobie.util.transactor._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
-import cats.effect.kernel.Async
-import doobie.util.transactor._
 
 case class HealthRoutes[F[_]: Async]() extends Http4sDsl[F] {
 
@@ -18,4 +19,5 @@ case class HealthRoutes[F[_]: Async]() extends Http4sDsl[F] {
   }
 
   val router: HttpRoutes[F] = Router(prefix -> routes)
+
 }

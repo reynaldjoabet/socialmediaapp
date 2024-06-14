@@ -1,18 +1,18 @@
 package services
 
-import java.security.SecureRandom
-import java.security.MessageDigest
 import java.nio.charset.StandardCharsets
-import org.mindrot.jbcrypt.BCrypt
+import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.Base64
 
+import org.mindrot.jbcrypt.BCrypt
 import pdi.jwt.JwtCirce
 
 object HashingService {
 
   def hashCookieContent(content: String) = {
     val random = new SecureRandom
-    val salt = new Array[Byte](16)
+    val salt   = new Array[Byte](16)
     random.nextBytes(salt)
     val messageDigest = MessageDigest.getInstance("SHA-512")
     messageDigest.update(salt)

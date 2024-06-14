@@ -1,9 +1,11 @@
 package error
 
+import cats.effect.IO
+
 import io.circe.generic.semiauto.deriveCodec
 import org.http4s.circe.jsonEncoderOf
-import cats.effect.IO
 import org.http4s.EntityEncoder
+
 final case class UserNotFound(message: String) extends Exception(message)
 
 object UserNotFound {

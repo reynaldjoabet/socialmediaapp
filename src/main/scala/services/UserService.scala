@@ -1,17 +1,15 @@
 package services
 
-import domain._
 import cats.effect.kernel.Async
-import doobie.util.transactor.Transactor
+
+import domain._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 final case class UserService[F[_]: Async](private val xa: Transactor[F]) {
 
   def findUserByUsername(username: String): F[Option[User]] =
-    sql"SELECT * FROM users WHERE username= $username"
-      .query[User]
-      .option
-      .transact(xa)
+    sql"SELECT * FROM users WHERE username= $username".query[User].option.transact(xa)
 
   def saveUser(
     username: String,

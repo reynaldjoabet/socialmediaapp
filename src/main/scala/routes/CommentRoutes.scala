@@ -1,24 +1,25 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
 import cats.effect.kernel.Async
-import org.http4s.server.AuthMiddleware
+import cats.implicits._
+
 import api._
 import authorization.Auth0AuthorizationMiddleware
-import org.http4s._
-import services._
 import db.Doobie._
 import doobie.util.transactor._
-import org.http4s.circe.CirceEntityEncoder._
+import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
-import cats.implicits._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`Content-Type`
+import org.http4s.server.AuthMiddleware
 import org.typelevel.ci.CIString
+import services._
 
 final case class CommentRoutes[F[_]: Async](commentService: CommentService[F])
-  extends Http4sDsl[F] {
+    extends Http4sDsl[F] {
 
-  private object UserId extends QueryParamDecoderMatcher[Int]("userId")
+  private object UserId    extends QueryParamDecoderMatcher[Int]("userId")
   private object CommentId extends QueryParamDecoderMatcher[Int]("commentId")
 
   import org.http4s.server.Router

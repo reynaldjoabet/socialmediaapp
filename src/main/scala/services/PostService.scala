@@ -1,9 +1,10 @@
 package services
 
-import domain._
 import cats.effect.kernel.Async
-import doobie.util.transactor.Transactor
+
+import domain._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 final case class PostService[F[_]: Async](private val xa: Transactor[F]) {
 
@@ -26,9 +27,6 @@ final case class PostService[F[_]: Async](private val xa: Transactor[F]) {
   def deletePost(
     postId: Int,
     userId: Int
-  ): F[Int] = sql"delete from posts where id = $postId AND user_id=$userId"
-    .update
-    .run
-    .transact(xa)
+  ): F[Int] = sql"delete from posts where id = $postId AND user_id=$userId".update.run.transact(xa)
 
 }

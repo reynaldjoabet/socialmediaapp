@@ -1,13 +1,14 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
-import org.http4s._
 import cats.effect.kernel.Async
 import cats.implicits._
-import org.http4s.implicits._
+
 import api._
 import authorization.Auth0AuthorizationMiddleware
 import doobie.util.transactor._
+import org.http4s._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.implicits._
 import org.http4s.server.AuthMiddleware
 
 final case class LogoutRoutes[F[_]: Async]() extends Http4sDsl[F] {
@@ -21,7 +22,7 @@ final case class LogoutRoutes[F[_]: Async]() extends Http4sDsl[F] {
   }
 
   private val authRoutes = AuthedRoutes.of[LoginUser, F] {
-    case GET -> Root / "logout" as loginUser => NoContent().map(_.removeCookie("sessionID"))
+    case req @ GET -> Root / "logout" as loginUser => NoContent().map(_.removeCookie("sessionID"))
   }
 
   val logoutRoutes = Router(

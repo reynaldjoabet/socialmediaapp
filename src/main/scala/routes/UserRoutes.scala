@@ -1,22 +1,23 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
-import org.http4s._
+import java.util.UUID
 
 import cats.effect.kernel.Async
-import services.UserService
 import cats.implicits._
-import org.http4s.implicits._
-import org.http4s.circe.CirceEntityEncoder._
-import org.http4s.circe.CirceEntityDecoder._
+
 import api._
-import error._
-import services._
-import domain.User
 import db.Doobie._
-import org.http4s.ResponseCookie
-import java.util.UUID
+import domain.User
 import doobie.util.transactor._
+import error._
+import org.http4s._
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.implicits._
+import org.http4s.ResponseCookie
+import services._
+import services.UserService
 
 final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Http4sDsl[F] {
 
@@ -84,6 +85,7 @@ final case class UserRoutes[F[_]: Async](userService: UserService[F]) extends Ht
   }
 
   val router: HttpRoutes[F] = Router(prefix -> routes)
+
 }
 
 object UserRoutes {

@@ -1,24 +1,26 @@
 package routes
 
 import cats.effect.kernel.Async
-import services._
-import org.http4s.dsl.Http4sDsl
-import org.http4s.server.AuthMiddleware
+import cats.implicits._
+
 import api._
 import authorization.Auth0AuthorizationMiddleware
 import authorization.RequireScopesMiddleware
-import org.http4s._
 import db.Doobie._
 import doobie.util.transactor._
-import org.http4s.circe.CirceEntityEncoder._
+import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
-import cats.implicits._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.server.AuthMiddleware
+import services._
 
 final case class RelationshipRoutes[F[_]: Async](relationshipService: RelationshipService[F])
-  extends Http4sDsl[F] {
+    extends Http4sDsl[F] {
+
   import org.http4s.server.Router
 
-  private object UserId extends QueryParamDecoderMatcher[Int]("userId")
+  private object UserId         extends QueryParamDecoderMatcher[Int]("userId")
   private object RelationshipId extends QueryParamDecoderMatcher[Int]("relationshipId")
   private val prefix = "/api/relationships"
 
@@ -85,7 +87,7 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
 
   val middleware = { http: HttpRoutes[F] =>
     Auth0AuthorizationMiddleware(http)
-  } andThen { http: HttpRoutes[F] =>
+  }.andThen { http: HttpRoutes[F] =>
     RequireScopesMiddleware(http, Set("read:challenges"))
   }
 
@@ -100,6 +102,7 @@ final case class RelationshipRoutes[F[_]: Async](relationshipService: Relationsh
 }
 
 object RelationshipRoutes {
+
   def make[F[_]: Async](): RelationshipRoutes[F] = RelationshipRoutes[F](RelationshipService(xa))
 
   def make[F[_]: Async](

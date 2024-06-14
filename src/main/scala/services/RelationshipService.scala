@@ -1,9 +1,10 @@
 package services
 
-import domain._
 import cats.effect.kernel.Async
-import doobie.util.transactor.Transactor
+
+import domain._
 import doobie.implicits._
+import doobie.util.transactor.Transactor
 
 final case class RelationshipService[F[_]: Async](private val xa: Transactor[F]) {
 

@@ -1,13 +1,15 @@
 package services
 
-import domain._
-import cats.effect.kernel.Async
-import doobie.util.transactor.Transactor
-import doobie.implicits._
 import java.time.LocalDateTime
+
+import cats.effect.kernel.Async
+
+import domain._
+import doobie.implicits._
 //import doobie.implicits.javasql._
 //import doobie.implicits.javatimedrivernative
 import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
 
 final case class CommentService[F[_]: Async](private val xa: Transactor[F]) {
 

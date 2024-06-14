@@ -1,21 +1,23 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
 import cats.effect.kernel.Async
-import org.http4s.server.AuthMiddleware
-import api._
-import authorization.Auth0AuthorizationMiddleware
-import org.http4s._
-import services._
-import db.Doobie._
-import doobie.util.transactor._
-import org.http4s.circe.CirceEntityEncoder._
-import org.http4s.circe.CirceEntityDecoder._
 import cats.implicits._
 
+import api._
+import authorization.Auth0AuthorizationMiddleware
+import db.Doobie._
+import doobie.util.transactor._
+import org.http4s._
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.server.AuthMiddleware
+import services._
+
 final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends Http4sDsl[F] {
+
   import org.http4s.server.Router
-  private object UserId extends QueryParamDecoderMatcher[Int]("userId")
+  private object UserId  extends QueryParamDecoderMatcher[Int]("userId")
   private object StoryId extends QueryParamDecoderMatcher[Int]("storyId")
   private val prefix = "/api/story"
 
@@ -29,9 +31,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
       req
         .as[CreateStory]
         .flatMap { story =>
-          storyService
-            .saveStory(story.imageUrl, story.userId)
-            .flatMap(Ok(_))
+          storyService.saveStory(story.imageUrl, story.userId).flatMap(Ok(_))
         }
         .handleErrorWith(e => InternalServerError(e.toString()))
     case DELETE -> Root / IntVar(userId) / IntVar(storyId) =>
@@ -89,6 +89,7 @@ final case class StoryRoutes[F[_]: Async](storyService: StoryService[F]) extends
 }
 
 object StoryRoutes {
+
   def make[F[_]: Async](): StoryRoutes[F] = StoryRoutes[F](StoryService(xa))
 
   def make[F[_]: Async](transactor: Transactor[F]): StoryRoutes[F] = StoryRoutes[F](

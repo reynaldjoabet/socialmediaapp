@@ -1,17 +1,18 @@
 package routes
 
-import org.http4s.dsl.Http4sDsl
-import org.http4s._
 import cats.effect.kernel.Async
-import org.http4s.server.AuthMiddleware
-import services._
+import cats.implicits._
+
 import api._
 import authorization.Auth0AuthorizationMiddleware
 import db.Doobie._
 import doobie.util.transactor._
-import org.http4s.circe.CirceEntityEncoder._
+import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
-import cats.implicits._
+import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.dsl.Http4sDsl
+import org.http4s.server.AuthMiddleware
+import services._
 
 final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Http4sDsl[F] {
 
@@ -22,17 +23,12 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
 
   private val routes = HttpRoutes.of[F] {
     case GET -> Root =>
-      postService
-        .getPosts
-        .flatMap(Ok(_))
-        .handleErrorWith(e => InternalServerError(e.toString()))
+      postService.getPosts.flatMap(Ok(_)).handleErrorWith(e => InternalServerError(e.toString()))
     case req @ POST -> Root / "add" =>
       req
         .as[CreatePost]
         .flatMap { post =>
-          postService
-            .savePost(post.description, post.image, post.userId)
-            .flatMap(Ok(_))
+          postService.savePost(post.description, post.image, post.userId).flatMap(Ok(_))
         }
         .handleErrorWith(e => InternalServerError(e.toString()))
     case DELETE -> Root / IntVar(userId) / IntVar(postId) =>
@@ -45,10 +41,7 @@ final case class PostRoutes[F[_]: Async](postService: PostService[F]) extends Ht
 
   private val authRoutes = AuthedRoutes.of[LoginUser, F] {
     case GET -> Root as loginUser =>
-      postService
-        .getPosts
-        .flatMap(Ok(_))
-        .handleErrorWith(e => InternalServerError(e.toString()))
+      postService.getPosts.flatMap(Ok(_)).handleErrorWith(e => InternalServerError(e.toString()))
 
     case req @ POST -> Root / "add" as loginUser =>
       req
@@ -97,4 +90,5 @@ object PostRoutes {
   )
 
   def make[F[_]: Async](): PostRoutes[F] = PostRoutes[F](PostService(xa))
+
 }

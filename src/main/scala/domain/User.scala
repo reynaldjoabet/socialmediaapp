@@ -1,7 +1,8 @@
 package domain
 
-import io.circe.generic.semiauto.deriveCodec
 import cats.effect.IO
+
+import io.circe.generic.semiauto.deriveCodec
 
 final case class User(
   id: Int,
