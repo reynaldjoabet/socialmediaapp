@@ -11,8 +11,10 @@ val bcryptVersion                      = "0.4.3"
 val doobieVersion                      = "1.0.0-RC5"
 val postgresVersion                    = "42.5.6"
 val quillVersion                       = "4.6.0"
-val catsEffectVersion                  = "3.4.1"
+
+val catsEffectVersion                  = "3.4.11"
 val fs2Version                         = "3.10.2"
+
 def circe(artifact: String): ModuleID  = "io.circe"   %% s"circe-$artifact"  % circeVersion
 def ciris(artifact: String): ModuleID  = "is.cir"     %% artifact            % cirisVersion
 def http4s(artifact: String): ModuleID = "org.http4s" %% s"http4s-$artifact" % http4sVersion
