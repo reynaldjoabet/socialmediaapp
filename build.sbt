@@ -44,8 +44,8 @@ val logback    = "ch.qos.logback"        % "logback-classic"           % logback
 val bcrypt     = "de.svenkubiak"         % "jBCrypt"                   % bcryptVersion
 val prometheus = "org.http4s"           %% "http4s-prometheus-metrics" % "0.24.2"
 val dropwizard = "org.http4s"           %% "http4s-dropwizard-metrics" % "0.23.11"
-val graphite   = "io.dropwizard.metrics" % "metrics-graphite"          % "4.2.13"
-libraryDependencies += "io.dropwizard.metrics" % "metrics-graphite" % "4.2.13"
+val graphite   = "io.dropwizard.metrics" % "metrics-graphite"          % "4.2.26"
+libraryDependencies += "io.dropwizard.metrics" % "metrics-graphite" % "4.2.26"
 
 lazy val root = (project in file(".")).settings(
   name := "SocialMediaApp",
