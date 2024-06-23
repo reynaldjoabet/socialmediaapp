@@ -3,10 +3,10 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "2.13.10"
 
 val http4sVersion                      = "0.23.16"
+val flywayVersion                      = "9.22.3"
 val cirisVersion                       = "3.6.0"
 val circeVersion                       = "0.14.8"
 
-val flywayVersion                      = "9.8.3"
 val bcryptVersion                      = "0.4.3"
 val postgresVersion                    = "42.5.1"
 val doobieVersion                      = "1.0.0-RC1"
