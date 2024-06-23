@@ -34,7 +34,7 @@ val jwks           = "com.auth0"             % "jwks-rsa"      % "0.21.2"
 val logbackVersion = "1.4.5"
 val postgres       = "org.postgresql"        % "postgresql"    % postgresVersion
 val flyway         = "org.flywaydb"          % "flyway-core"   % flywayVersion
-val ciris_hocon    = "lt.dvim.ciris-hocon"  %% "ciris-hocon"   % "1.0.1"
+val ciris_hocon    = "lt.dvim.ciris-hocon"  %% "ciris-hocon"   % "1.2.0"
 
 val doobie = "org.tpolecat" %% "doobie-core" % doobieVersion
 
