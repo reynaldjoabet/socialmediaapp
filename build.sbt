@@ -1,17 +1,20 @@
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.10"
+ThisBuild / scalaVersion := "2.13.13"
 
-val http4sVersion                      = "0.23.16"
-val cirisVersion                       = "2.4.0"
-val circeVersion                       = "0.14.5"
-val flywayVersion                      = "9.8.3"
+val http4sVersion                      = "0.23.27"
+val flywayVersion                      = "9.22.3"
+val cirisVersion                       = "3.6.0"
+val circeVersion                       = "0.14.8"
+
 val bcryptVersion                      = "0.4.3"
-val postgresVersion                    = "42.5.1"
-val doobieVersion                      = "1.0.0-RC1"
+val doobieVersion                      = "1.0.0-RC5"
+val postgresVersion                    = "42.5.6"
 val quillVersion                       = "4.6.0"
+
 val catsEffectVersion                  = "3.4.11"
-val fs2Version                         = "3.4.0"
+val fs2Version                         = "3.10.2"
+
 def circe(artifact: String): ModuleID  = "io.circe"   %% s"circe-$artifact"  % circeVersion
 def ciris(artifact: String): ModuleID  = "is.cir"     %% artifact            % cirisVersion
 def http4s(artifact: String): ModuleID = "org.http4s" %% s"http4s-$artifact" % http4sVersion
@@ -29,12 +32,12 @@ val http4sDsl      = http4s("dsl")
 val http4sServer   = http4s("ember-server")
 val http4sClient   = http4s("ember-client")
 val http4sCirce    = http4s("circe")
-val jwt            = "com.github.jwt-scala" %% "jwt-circe"     % "9.1.2"
-val jwks           = "com.auth0"             % "jwks-rsa"      % "0.21.2"
+val jwt            = "com.github.jwt-scala" %% "jwt-circe"     % "9.4.6"
+val jwks           = "com.auth0"             % "jwks-rsa"      % "0.21.3"
 val logbackVersion = "1.4.5"
 val postgres       = "org.postgresql"        % "postgresql"    % postgresVersion
 val flyway         = "org.flywaydb"          % "flyway-core"   % flywayVersion
-val ciris_hocon    = "lt.dvim.ciris-hocon"  %% "ciris-hocon"   % "1.0.1"
+val ciris_hocon    = "lt.dvim.ciris-hocon"  %% "ciris-hocon"   % "1.2.0"
 
 val doobie = "org.tpolecat" %% "doobie-core" % doobieVersion
 
@@ -42,10 +45,10 @@ val doobie_postgres =
   "org.tpolecat" %% "doobie-postgres" % doobieVersion // Postgres driver 42.3.1 + type mappings.
 val logback    = "ch.qos.logback"        % "logback-classic"           % logbackVersion
 val bcrypt     = "de.svenkubiak"         % "jBCrypt"                   % bcryptVersion
-val prometheus = "org.http4s"           %% "http4s-prometheus-metrics" % "0.24.2"
+val prometheus = "org.http4s"           %% "http4s-prometheus-metrics" % "0.24.7"
 val dropwizard = "org.http4s"           %% "http4s-dropwizard-metrics" % "0.23.11"
-val graphite   = "io.dropwizard.metrics" % "metrics-graphite"          % "4.2.13"
-libraryDependencies += "io.dropwizard.metrics" % "metrics-graphite" % "4.2.13"
+val graphite   = "io.dropwizard.metrics" % "metrics-graphite"          % "4.2.26"
+libraryDependencies += "io.dropwizard.metrics" % "metrics-graphite" % "4.2.26"
 
 lazy val root = (project in file(".")).settings(
   name := "SocialMediaApp",
