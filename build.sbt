@@ -2,18 +2,18 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.13"
 
-val http4sVersion                      = "0.23.27"
-val flywayVersion                      = "9.22.3"
-val cirisVersion                       = "3.6.0"
-val circeVersion                       = "0.14.8"
+val http4sVersion = "0.23.27"
+val flywayVersion = "9.22.3"
+val cirisVersion  = "3.6.0"
+val circeVersion  = "0.14.8"
 
-val bcryptVersion                      = "0.4.3"
-val doobieVersion                      = "1.0.0-RC5"
-val postgresVersion                    = "42.5.6"
-val quillVersion                       = "4.6.0"
+val bcryptVersion   = "0.4.3"
+val doobieVersion   = "1.0.0-RC5"
+val postgresVersion = "42.5.6"
+val quillVersion    = "4.6.0"
 
-val catsEffectVersion                  = "3.4.11"
-val fs2Version                         = "3.10.2"
+val catsEffectVersion = "3.4.11"
+val fs2Version        = "3.10.2"
 
 def circe(artifact: String): ModuleID  = "io.circe"   %% s"circe-$artifact"  % circeVersion
 def ciris(artifact: String): ModuleID  = "is.cir"     %% artifact            % cirisVersion
@@ -32,7 +32,7 @@ val http4sDsl      = http4s("dsl")
 val http4sServer   = http4s("ember-server")
 val http4sClient   = http4s("ember-client")
 val http4sCirce    = http4s("circe")
-val jwt            = "com.github.jwt-scala" %% "jwt-circe"     % "9.4.6"
+val jwt            = "com.github.jwt-scala" %% "jwt-circe"     % "10.0.1"
 val jwks           = "com.auth0"             % "jwks-rsa"      % "0.21.3"
 val logbackVersion = "1.4.5"
 val postgres       = "org.postgresql"        % "postgresql"    % postgresVersion
